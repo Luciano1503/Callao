@@ -126,7 +126,10 @@ public class EmailService {
 			          <p style="margin:0 0 8px;"><strong>DNI:</strong> %s</p>
 			          <p style="margin:0;"><strong>Contrasena temporal:</strong> %s</p>
 			        </div>
-			        <p style="margin:0 0 16px;line-height:1.6;">Al iniciar sesion por primera vez, el sistema te solicitara cambiar esta contrasena de forma obligatoria.</p>
+			        <p style="margin:0 0 16px;line-height:1.6;">Logueate con tus credenciales y te daran la opcion para cambiar de contrasenia.</p>
+			        <div style="text-align:center;margin:24px 0;">
+			          <a href="https://callao-ame9.vercel.app/" style="display:inline-block;padding:12px 24px;background:#00346f;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:16px;">Iniciar sesion</a>
+			        </div>
 			        <p style="margin:0;color:#6b7280;font-size:13px;">Si no esperabas este correo, comunicate con el administrador del sistema.</p>
 			      </div>
 			      <div style="padding:18px 28px;background:#f8fafc;border-top:1px solid #e4e8f0;text-align:center;color:#7a818d;font-size:12px;">
@@ -161,6 +164,87 @@ public class EmailService {
 		String rolNombre,
 		String dni,
 		String temporaryPassword
+	) {
+	}
+
+	public boolean sendPasswordChangedEmail(PasswordChangedEmail email) {
+		String html = buildPasswordChangedTemplate(email);
+
+		if (!isConfigured()) {
+			LOGGER.warn("Correo no enviado (sin config). Para: {}", email.to());
+			return false;
+		}
+
+		try {
+			UserCredentials credentials = UserCredentials.newBuilder()
+				.setClientId(clientId)
+				.setClientSecret(clientSecret)
+				.setRefreshToken(refreshToken)
+				.build();
+
+			Gmail service = new Gmail.Builder(
+					GoogleNetHttpTransport.newTrustedTransport(),
+					GsonFactory.getDefaultInstance(),
+					new HttpCredentialsAdapter(credentials))
+				.setApplicationName("Callao Backend")
+				.build();
+
+			Properties props = new Properties();
+			Session session = Session.getDefaultInstance(props, null);
+			MimeMessage mimeMessage = new MimeMessage(session);
+
+			mimeMessage.setFrom(new InternetAddress(sender));
+			mimeMessage.addRecipient(jakarta.mail.Message.RecipientType.TO, new InternetAddress(email.to()));
+			mimeMessage.setSubject("Contrasena actualizada - GORE Callao", "UTF-8");
+			mimeMessage.setContent(html, "text/html; charset=utf-8");
+
+			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+			mimeMessage.writeTo(buffer);
+			byte[] rawMessageBytes = buffer.toByteArray();
+			String encodedEmail = Base64.getUrlEncoder().encodeToString(rawMessageBytes);
+
+			Message message = new Message();
+			message.setRaw(encodedEmail);
+
+			service.users().messages().send("me", message).execute();
+			return true;
+		} catch (Exception exception) {
+			LOGGER.error("Error enviando correo con Gmail API", exception);
+			return false;
+		}
+	}
+
+	private String buildPasswordChangedTemplate(PasswordChangedEmail email) {
+		return """
+			<div style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,sans-serif;color:#1d2636;">
+			  <div style="max-width:620px;margin:0 auto;padding:28px 16px;">
+			    <div style="background:#fff;border:1px solid #dfe5ef;border-radius:10px;overflow:hidden;">
+			      <div style="padding:30px 28px;text-align:center;border-bottom:1px solid #e4e8f0;">
+			        <div style="display:inline-block;padding:14px 18px;border-radius:8px;background:#00346f;color:#fff;font-size:24px;font-weight:800;letter-spacing:.03em;">GORE CALLAO</div>
+			      </div>
+			      <div style="padding:30px 34px;">
+			        <h1 style="margin:0 0 14px;font-size:24px;color:#001b3f;">Hola, %s</h1>
+			        <p style="margin:0 0 18px;line-height:1.6;">Tus credenciales fueron correctamente cambiadas, disfruta tu opcion de <strong>%s</strong>.</p>
+			        <div style="text-align:center;margin:24px 0;">
+			          <a href="https://callao-ame9.vercel.app/" style="display:inline-block;padding:12px 24px;background:#00346f;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:16px;">Ir al sistema</a>
+			        </div>
+			      </div>
+			      <div style="padding:18px 28px;background:#f8fafc;border-top:1px solid #e4e8f0;text-align:center;color:#7a818d;font-size:12px;">
+			        Gobierno Regional del Callao
+			      </div>
+			    </div>
+			  </div>
+			</div>
+			""".formatted(
+				escape(email.nombres()),
+				escape(email.rolNombre())
+			);
+	}
+
+	public record PasswordChangedEmail(
+		String to,
+		String nombres,
+		String rolNombre
 	) {
 	}
 }

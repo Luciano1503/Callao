@@ -8,6 +8,8 @@ import com.callao.backend.modules.auth.dto.LoginRequest;
 import com.callao.backend.modules.auth.dto.LoginResponse;
 import com.callao.backend.modules.auth.infrastructure.AuthRepository;
 import com.callao.backend.modules.auth.infrastructure.AuthRepository.AuthUserRow;
+import com.callao.backend.modules.notification.application.EmailService;
+import com.callao.backend.modules.notification.application.EmailService.PasswordChangedEmail;
 import com.callao.backend.shared.error.BusinessException;
 
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ public class AuthService {
 
 	private final AuthRepository authRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final EmailService emailService;
 
 	public LoginResponse login(LoginRequest request) {
 		AuthUserRow user = authRepository.findActiveByIdentifier(request.usuario())
@@ -52,5 +55,11 @@ public class AuthService {
 		}
 
 		authRepository.updatePassword(user.id(), passwordEncoder.encode(request.newPassword()));
+
+		emailService.sendPasswordChangedEmail(new PasswordChangedEmail(
+			user.correo(),
+			user.nombres(),
+			user.rolNombre()
+		));
 	}
 }
