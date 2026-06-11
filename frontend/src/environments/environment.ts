@@ -1,4 +1,4 @@
 export const environment = {
-  production: false,
-  apiUrl: '/api/v1'
+  production: true,
+  apiUrl: 'https://believable-forgiveness-production-c96b.up.railway.app/api/v1'
 };
