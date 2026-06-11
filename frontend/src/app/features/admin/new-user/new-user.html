@@ -1,0 +1,142 @@
+<section>
+  <header class="page-header">
+    <div>
+      <nav class="breadcrumb" aria-label="Ruta">
+        <a class="text-link" routerLink="/usuarios">Usuarios</a>
+        <span>&gt;</span>
+        <span>Nuevo usuario</span>
+      </nav>
+      <h1 class="page-title">Nuevo usuario</h1>
+      <p class="page-copy">
+        Complete los datos solicitados para registrar un nuevo usuario en el sistema. Los campos marcados con asterisco
+        (<span class="required">*</span>) son obligatorios.
+      </p>
+    </div>
+  </header>
+
+  @if (createdUser(); as user) {
+    <div class="panel-card form-success" style="margin-bottom: 18px;">
+      <strong>Usuario registrado correctamente.</strong>
+      <span>
+        @if (user.emailSent) {
+          Se le mando sus credenciales de ingreso a su correo correspondiente.
+        } @else {
+          El usuario fue creado, pero no se pudo enviar el correo de credenciales.
+        }
+      </span>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="form-error" style="max-width: 1120px; margin-bottom: 18px;" role="alert">{{ errorMessage() }}</div>
+  }
+
+  <section class="panel-card form-card">
+    <form (submit)="save($event)">
+      <section class="form-section">
+        <h2 class="form-section-title">
+          <svg lucideUserRoundPlus class="icon"></svg>
+          Datos Personales
+        </h2>
+        <div class="form-grid">
+          <label class="field-group">
+            <span class="field-label">DNI <span class="required">*</span></span>
+            <input class="field" name="dni" inputmode="numeric" maxlength="8" pattern="[0-9]{8}" placeholder="Ingrese el DNI" required />
+          </label>
+
+          <label class="field-group">
+            <span class="field-label">Nombres y Apellidos <span class="required">*</span></span>
+            <input class="field" name="nombres" placeholder="Nombre completo" required />
+          </label>
+
+          <label class="field-group">
+            <span class="field-label">Correo electronico <span class="required">*</span></span>
+            <input class="field" name="correo" type="email" pattern="^[^ @]+@[^ @]+\.[^ @]{2,}$" placeholder="correo@institucion.gob.pe" required />
+          </label>
+
+          <label class="field-group">
+            <span class="field-label">Numero de celular</span>
+            <input class="field" name="celular" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" placeholder="Ej. 999888777" />
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2 class="form-section-title">
+          <svg lucideLock class="icon"></svg>
+          Credenciales de Acceso
+        </h2>
+        <div class="form-grid">
+          <label class="field-group">
+            <span class="field-label">Contrasena temporal <span class="required">*</span></span>
+            <span class="input-shell">
+              <input class="field has-trailing" name="password" [type]="showPassword() ? 'text' : 'password'" autocomplete="new-password" required />
+              <button class="icon-button trailing" type="button" aria-label="Mostrar u ocultar contrasena" (click)="togglePassword()">
+                @if (showPassword()) {
+                  <svg lucideEyeOff class="icon"></svg>
+                } @else {
+                  <svg lucideEye class="icon"></svg>
+                }
+              </button>
+            </span>
+          </label>
+
+          <label class="field-group">
+            <span class="field-label">Confirmar contrasena <span class="required">*</span></span>
+            <span class="input-shell">
+              <input class="field has-trailing" name="confirmPassword" [type]="showConfirmPassword() ? 'text' : 'password'" autocomplete="new-password" required />
+              <button class="icon-button trailing" type="button" aria-label="Mostrar u ocultar confirmacion de contrasena" (click)="toggleConfirmPassword()">
+                @if (showConfirmPassword()) {
+                  <svg lucideEyeOff class="icon"></svg>
+                } @else {
+                  <svg lucideEye class="icon"></svg>
+                }
+              </button>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <h2 class="form-section-title">
+          <svg lucideBadge class="icon"></svg>
+          Rol y Asignacion
+        </h2>
+        <div class="form-grid">
+          <label class="field-group">
+            <span class="field-label">Rol de Usuario <span class="required">*</span></span>
+            <select class="select" name="rolId" required>
+              <option value="">Seleccione un rol</option>
+              @for (role of roles(); track role.id) {
+                <option [value]="role.id">{{ role.nombre }}</option>
+              }
+            </select>
+          </label>
+
+          <div class="field-group">
+            <span class="field-label">Estado del Usuario <span class="required">*</span></span>
+            <div style="display: flex; gap: 24px; min-height: 50px; align-items: center;">
+              <label class="radio-label">
+                <input type="radio" name="estado" value="ACTIVO" checked />
+                <span style="display: inline-flex; align-items: center; gap: 7px;"><span style="width: 9px; height: 9px; border-radius: 50%; background: #16a765;"></span>Activo</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="estado" value="INACTIVO" />
+                <span style="display: inline-flex; align-items: center; gap: 7px;"><span style="width: 9px; height: 9px; border-radius: 50%; background: var(--danger);"></span>Inactivo</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <a class="btn btn-ghost" routerLink="/usuarios">Cancelar</a>
+        <button class="btn btn-secondary" type="reset">Limpiar formulario</button>
+        <button class="btn btn-primary" type="submit" [disabled]="isSubmitting()">
+          <svg lucideSave class="icon"></svg>
+          <span>{{ isSubmitting() ? 'Guardando...' : 'Grabar usuario' }}</span>
+        </button>
+      </div>
+    </form>
+  </section>
+</section>

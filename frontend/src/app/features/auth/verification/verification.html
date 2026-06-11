@@ -1,0 +1,109 @@
+<section class="auth-page">
+  <aside class="auth-brand verify">
+    <div class="brand-content">
+      <div class="brand-badge gold">
+        <svg lucideLandmark style="width: 76px; height: 76px;"></svg>
+      </div>
+      <h1 class="brand-title">GORE CALLAO</h1>
+      <div class="brand-divider"></div>
+      <p class="brand-subtitle">Plataforma de Supervision y Evaluacion. Acceso seguro a servicios digitales institucionales.</p>
+    </div>
+  </aside>
+
+  <main class="auth-panel" style="background: #f8f9fa;">
+    <section class="auth-card password-card" aria-labelledby="password-title">
+      <div class="brand-badge" style="width: 68px; height: 68px; margin-bottom: 26px; background: #d7e3ff; color: var(--primary); box-shadow: none;">
+        <svg lucideKeyRound class="icon-lg"></svg>
+      </div>
+
+      <h1 id="password-title" style="color: var(--primary-strong);">Cambio de Contrasena</h1>
+      <p style="font-size: 17px; margin: 12px 0 0;">
+        Actualiza tu contrasena temporal antes de ingresar al sistema.
+      </p>
+
+      <form (submit)="updatePassword($event)" class="password-form">
+        <label class="field-group">
+          <span class="field-label">Contrasena antigua <span class="required">*</span></span>
+          <span class="input-shell">
+            <svg lucideLockKeyhole class="icon"></svg>
+            <input
+              class="field has-trailing"
+              autocomplete="current-password"
+              name="oldPassword"
+              required
+              [type]="showOldPassword() ? 'text' : 'password'"
+            />
+            <button class="icon-button trailing" type="button" aria-label="Mostrar u ocultar contrasena antigua" (click)="toggleOldPassword()">
+              @if (showOldPassword()) {
+                <svg lucideEyeOff class="icon"></svg>
+              } @else {
+                <svg lucideEye class="icon"></svg>
+              }
+            </button>
+          </span>
+        </label>
+
+        <label class="field-group">
+          <span class="field-label">Contrasena nueva <span class="required">*</span></span>
+          <span class="input-shell">
+            <svg lucideKeyRound class="icon"></svg>
+            <input
+              class="field has-trailing"
+              autocomplete="new-password"
+              name="newPassword"
+              required
+              minlength="6"
+              [type]="showNewPassword() ? 'text' : 'password'"
+            />
+            <button class="icon-button trailing" type="button" aria-label="Mostrar u ocultar contrasena nueva" (click)="toggleNewPassword()">
+              @if (showNewPassword()) {
+                <svg lucideEyeOff class="icon"></svg>
+              } @else {
+                <svg lucideEye class="icon"></svg>
+              }
+            </button>
+          </span>
+        </label>
+
+        <label class="field-group">
+          <span class="field-label">Reescribir contrasena nueva <span class="required">*</span></span>
+          <span class="input-shell">
+            <svg lucideKeyRound class="icon"></svg>
+            <input
+              class="field has-trailing"
+              autocomplete="new-password"
+              name="confirmNewPassword"
+              required
+              minlength="6"
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+            />
+            <button class="icon-button trailing" type="button" aria-label="Mostrar u ocultar confirmacion" (click)="toggleConfirmPassword()">
+              @if (showConfirmPassword()) {
+                <svg lucideEyeOff class="icon"></svg>
+              } @else {
+                <svg lucideEye class="icon"></svg>
+              }
+            </button>
+          </span>
+        </label>
+
+        @if (errorMessage()) {
+          <p class="form-error" role="alert">{{ errorMessage() }}</p>
+        }
+
+        <div style="display: grid; gap: 14px;">
+          <button class="btn btn-primary btn-full" type="submit" [disabled]="isSubmitting()">
+            <span>{{ isSubmitting() ? 'Actualizando...' : 'Actualizar contrasena' }}</span>
+            <svg lucideArrowRight class="icon"></svg>
+          </button>
+          <a class="btn btn-secondary btn-full" routerLink="/login">Cancelar</a>
+        </div>
+      </form>
+    </section>
+
+    <p class="secure-note">
+      <svg lucideLockKeyhole class="icon"></svg>
+      <span>Conexion segura cifrada de extremo a extremo</span>
+    </p>
+  </main>
+</section>

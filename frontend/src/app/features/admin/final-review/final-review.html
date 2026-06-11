@@ -1,0 +1,195 @@
+<section>
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Administrador</p>
+      <h1 class="page-title">Revision Final de Evaluaciones</h1>
+      <p class="page-copy">Solo el administrador puede cambiar el resultado final y exportar listados por grupo.</p>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="form-error relation-message">{{ errorMessage() }}</div>
+  }
+
+  @if (successMessage()) {
+    <div class="form-success relation-message">{{ successMessage() }}</div>
+  }
+
+  <section class="panel-card filters review-filters">
+    <label class="field-group">
+      <span class="field-label">Grupo</span>
+      <select class="select" [value]="groupFilter()" (change)="updateGroupFilter($event)">
+        <option value="">Todos los grupos</option>
+        @for (group of groups(); track group.id) {
+          <option [value]="group.id">Grupo {{ group.numeroGrupo }}</option>
+        }
+      </select>
+    </label>
+    <label class="field-group">
+      <span class="field-label">Fecha</span>
+      <input class="field" type="date" [value]="dateFilter()" (input)="updateDateFilter($event)" />
+    </label>
+    <label class="field-group">
+      <span class="field-label">Color</span>
+      <select class="select" [value]="colorFilter()" (change)="updateColorFilter($event)">
+        <option value="">Todos los colores</option>
+        @for (color of colors(); track color.id) {
+          <option [value]="color.id">{{ color.nombre }}</option>
+        }
+      </select>
+    </label>
+    <label class="field-group">
+      <span class="field-label">Estado</span>
+      <select class="select" [value]="statusFilter()" (change)="updateStatusFilter($event)">
+        <option value="">Todos</option>
+        <option value="PENDIENTE">Pendiente</option>
+        <option value="EN_REVISION">En revision</option>
+        <option value="FINALIZADO">Finalizado</option>
+      </select>
+    </label>
+    <button class="btn btn-secondary" type="button" (click)="loadGroupsOnly()">
+      <svg lucideListFilter class="icon"></svg>
+      <span>Filtrar</span>
+    </button>
+  </section>
+
+  <section class="panel-card compact-table-card">
+    <div class="table-wrap">
+      <table class="data-table review-table">
+        <thead>
+          <tr>
+            <th>Grupo</th>
+            <th>Color</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Evaluados</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (isLoading()) {
+            <tr>
+              <td class="empty-cell" colspan="7">Cargando grupos...</td>
+            </tr>
+          } @else if (filteredGroups().length === 0) {
+            <tr>
+              <td class="empty-cell" colspan="7">No hay grupos que coincidan con los filtros.</td>
+            </tr>
+          }
+
+          @for (group of filteredGroups(); track group.id) {
+            <tr [class.is-locked]="group.estado === 'FINALIZADO'">
+              <td><strong>Grupo {{ group.numeroGrupo }}</strong></td>
+              <td><span class="color-dot" [style.background]="group.colorHex"></span>{{ group.colorNombre }}</td>
+              <td>{{ formatDate(group.registradoEn) }}</td>
+              <td>{{ formatTime(group.registradoEn) }}</td>
+              <td>{{ group.totalEvaluados }} / 10</td>
+              <td>
+                @if (group.estado === 'FINALIZADO') {
+                  <span class="badge success"><svg lucideLock class="icon"></svg>Finalizado</span>
+                } @else if (group.estado === 'EN_REVISION') {
+                  <span class="badge">En revision</span>
+                } @else {
+                  <span class="badge warning">Pendiente</span>
+                }
+              </td>
+              <td>
+                <button class="btn btn-ghost" type="button" (click)="selectGroup(group)">
+                  <span>{{ group.estado === 'FINALIZADO' ? 'Solo lectura' : 'Revisar grupo' }}</span>
+                  <svg lucideChevronRight class="icon"></svg>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  @if (activeDetail(); as detail) {
+    <section class="panel-card final-detail">
+      <div class="card-header">
+        <h2 class="card-title">Detalle Grupo {{ detail.grupo.numeroGrupo }}</h2>
+        <div class="review-detail-tools" style="display: flex; gap: 0.5rem; align-items: center;">
+          <span class="info-pill">{{ detail.evaluados.length }} evaluado{{ detail.evaluados.length === 1 ? '' : 's' }} - {{ detail.grupo.colorNombre }}</span>
+          @if (detail.grupo.estado === 'FINALIZADO') {
+            <button class="btn btn-secondary btn-sm" (click)="exportExcel()" title="Exportar Excel">
+              <svg lucideFileSpreadsheet class="btn-icon"></svg>
+            </button>
+            <button class="btn btn-primary btn-sm" (click)="exportPdf()" title="Imprimir PDF">
+              <svg lucideFileText class="btn-icon"></svg> Imprimir
+            </button>
+          }
+        </div>
+      </div>
+      <p class="subtext review-context">Mostrando habilidades y reglamentos registrados por todos los veedores en simultaneo para facilitar la calificacion.</p>
+      <div class="table-wrap">
+        <table class="data-table final-people-table">
+          <thead>
+            <tr>
+              <th>N</th>
+              <th>Evaluado</th>
+              <th>Detalles</th>
+              <th>Observaciones de Veedores</th>
+              <th>Resultado final</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (person of detail.evaluados; track person.id) {
+              <tr>
+                <td>{{ person.numeroFila }}</td>
+                <td>
+                  <strong>{{ person.nombres }}</strong>
+                  <div class="subtext">{{ person.dni }}</div>
+                </td>
+                <td>
+                  <div><span class="badge">{{ person.categoriaCodigo }}</span></div>
+                  <div class="subtext">{{ person.placa || 'Sin placa' }}</div>
+                </td>
+                <td>
+                  <div class="veedor-reviews-list" style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem;">
+                    @for (review of person.revisiones; track review.tipoVeedorCodigo) {
+                      <div class="veedor-review-item" style="background: var(--bg-secondary); padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <strong style="display: block; margin-bottom: 0.25rem;">{{ review.tipoVeedorCodigo.replace('_', ' ') }}</strong>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                          <div><span class="subtext">Habilidad:</span> {{ criterionText(review.habilidades) }}</div>
+                          <div><span class="subtext">Reglamento:</span> {{ criterionText(review.reglamentos) }}</div>
+                        </div>
+                      </div>
+                    } @empty {
+                      <span class="subtext">Sin revisiones registradas.</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <select
+                    class="table-select"
+                    [value]="results()[person.id]"
+                    [disabled]="detail.grupo.estado === 'FINALIZADO'"
+                    (change)="updateResult(person, $event)"
+                  >
+                    <option value="PENDIENTE">Pendiente</option>
+                    <option value="APROBADO">Aprobado</option>
+                    <option value="DESAPROBADO">Desaprobado</option>
+                  </select>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td class="empty-cell" colspan="5">Este grupo no tiene evaluados registrados.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="sheet-actions">
+        <p class="subtext">Al finalizar, evaluador y veedores ya no podran editar sus fichas.</p>
+        <button class="btn btn-primary" type="button" [disabled]="isSaving() || detail.grupo.estado === 'FINALIZADO' || detail.evaluados.length === 0" (click)="finalizeEvaluation()">
+          <svg lucideSave class="icon"></svg>
+          <span>{{ isSaving() ? 'Finalizando...' : 'Finalizar evaluacion' }}</span>
+        </button>
+      </footer>
+    </section>
+  }
+</section>

@@ -1,0 +1,163 @@
+<section>
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Veedor</p>
+      <h1 class="page-title">Ficha de Evaluacion: {{ position.label }}</h1>
+      <p class="page-copy">Registro de habilidad y reglamento. El resultado final solo lo modifica el administrador.</p>
+    </div>
+  </header>
+
+  <div class="assignment-pill" aria-label="Tipo de veedor asignado">
+    <span>Tipo asignado</span>
+    <strong>{{ position.label }}</strong>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="form-error relation-message">{{ errorMessage() }}</div>
+  }
+
+  @if (successMessage()) {
+    <div class="form-success relation-message">{{ successMessage() }}</div>
+  }
+
+  @if (isLoading()) {
+    <section class="panel-card loading-card">Cargando ficha de veedor...</section>
+  } @else if (sheet(); as currentSheet) {
+  <article class="digital-sheet" [style.opacity]="isChangingGroup() ? '0.5' : '1'" [style.pointer-events]="isChangingGroup() ? 'none' : 'auto'" style="transition: opacity 0.2s ease;">
+    <header class="sheet-header">
+      <div>
+        <h2>Gobierno Regional del Callao</h2>
+        <p>Gerencia Regional de Transportes y Comunicaciones</p>
+        <span>Unidad de Licencias - Examen de Manejo</span>
+      </div>
+      <strong>Ficha N {{ currentSheet.fichaId ?? currentSheet.grupoId }}</strong>
+    </header>
+
+    <section class="sheet-meta">
+      <div>
+        <span>Posicion</span>
+        <strong>{{ position.label }}</strong>
+      </div>
+      <div>
+        <span>Grupo</span>
+        <strong>
+          <select class="meta-select" (change)="selectGroup($event)" [disabled]="isChangingGroup()">
+            @for (summary of groups(); track summary.id) {
+              <option [value]="summary.id" [selected]="summary.id === currentSheet.grupoId">Grupo {{ summary.numeroGrupo }} ({{ summary.totalEvaluados }}/10)</option>
+            } @empty {
+              <option [value]="currentSheet.grupoId" selected>Grupo {{ currentSheet.numeroGrupo }}</option>
+            }
+          </select>
+        </strong>
+      </div>
+      <div>
+        <span>Color</span>
+        <strong><span class="color-dot" [style.background]="currentSheet.colorHex"></span>{{ currentSheet.colorNombre }}</strong>
+      </div>
+      <div>
+        <span>Fecha</span>
+        <strong><svg lucideCalendar class="icon"></svg>{{ formatDate(currentSheet.registradoEn) }}</strong>
+      </div>
+      <div>
+        <span>Hora</span>
+        <strong><svg lucideClock class="icon"></svg>{{ formatTime(currentSheet.registradoEn) }}</strong>
+      </div>
+      <div>
+        <span>Resultado final</span>
+        <strong class="badge" [class.success]="currentSheet.estadoGrupo === 'FINALIZADO'" [class.warning]="currentSheet.estadoGrupo !== 'FINALIZADO'">
+          {{ currentSheet.estadoGrupo === 'FINALIZADO' ? 'Finalizado' : 'Pendiente' }}
+        </strong>
+      </div>
+    </section>
+
+    <div class="table-wrap veedor-table-wrap">
+      <table class="data-table veedor-table">
+        <thead>
+          <tr>
+            <th>N</th>
+            <th>CAT</th>
+            <th>Habilidad</th>
+            <th>Reglamento</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.index) {
+            <tr>
+              <td>{{ row.index }}</td>
+              <td><span class="badge">{{ row.category }}</span></td>
+              <td>
+                <details class="table-multi-picker" name="veedor-picker">
+                  <summary class="multi-trigger" aria-label="Habilidades seleccionables">
+                    @for (siglas of selectedLabels(row.skills, skillOptions()); track siglas) {
+                      <span class="mini-chip">{{ siglas }}</span>
+                    } @empty {
+                      <span class="mini-chip muted">Seleccionar varios</span>
+                    }
+                  </summary>
+                  <div class="multi-menu criteria-menu">
+                    @for (skill of skillOptions(); track skill.id) {
+                      <label class="multi-choice">
+                        <input type="checkbox" [checked]="row.skills.includes(skill.id)" [disabled]="isReadOnly()" (change)="toggleCriterion(row.index, 'skills', skill.id, $event)">
+                        <span>{{ skill.siglas }}</span>
+                      </label>
+                    } @empty {
+                      <span class="multi-empty">Cargando criterios...</span>
+                    }
+                  </div>
+                </details>
+              </td>
+              <td>
+                <details class="table-multi-picker" name="veedor-picker">
+                  <summary class="multi-trigger" aria-label="Reglamentos seleccionables">
+                    @for (siglas of selectedLabels(row.regulations, regulationOptions()); track siglas) {
+                      <span class="mini-chip">{{ siglas }}</span>
+                    } @empty {
+                      <span class="mini-chip muted">Seleccionar varios</span>
+                    }
+                  </summary>
+                  <div class="multi-menu criteria-menu">
+                    @for (regulation of regulationOptions(); track regulation.id) {
+                      <label class="multi-choice">
+                        <input type="checkbox" [checked]="row.regulations.includes(regulation.id)" [disabled]="isReadOnly()" (change)="toggleCriterion(row.index, 'regulations', regulation.id, $event)">
+                        <span>{{ regulation.siglas }}</span>
+                      </label>
+                    } @empty {
+                      <span class="multi-empty">Cargando reglamentos...</span>
+                    }
+                  </div>
+                </details>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td class="empty-cell" colspan="4">No hay evaluados registrados para este grupo.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <section class="sheet-observations">
+      <label class="field-group">
+        <span class="field-label">Observaciones del veedor</span>
+        <textarea
+          class="textarea"
+          rows="5"
+          [value]="observations()"
+          [disabled]="isReadOnly()"
+          (input)="updateObservations($event)"
+          placeholder="Ingrese observaciones generales de la ficha..."
+        ></textarea>
+      </label>
+    </section>
+
+    <footer class="sheet-actions">
+      <p class="subtext">Si el administrador finaliza la evaluacion, esta ficha quedara en solo lectura.</p>
+      <button class="btn btn-primary" type="button" [disabled]="isSaving() || isReadOnly() || rows().length === 0" (click)="saveSheet()">
+        <svg lucideSave class="icon"></svg>
+        <span>{{ isSaving() ? 'Guardando...' : 'Guardar ficha' }}</span>
+      </button>
+    </footer>
+  </article>
+  }
+</section>

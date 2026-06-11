@@ -1,0 +1,82 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">
+        <svg lucideShield class="icon-lg"></svg>
+      </div>
+      <div>
+        <h1 class="sidebar-title">{{ profileInfo().brand }}</h1>
+        <p class="sidebar-subtitle">{{ profileInfo().subtitle }}</p>
+      </div>
+    </div>
+
+    <nav class="nav-menu" aria-label="Menu principal">
+      @switch (currentProfile()) {
+        @case ('admin') {
+          <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">
+            <svg lucideLayoutDashboard class="icon"></svg>
+            <span>Inicio</span>
+          </a>
+          <a class="nav-link" routerLink="/usuarios" routerLinkActive="active">
+            <svg lucideUsers class="icon"></svg>
+            <span>Usuarios</span>
+          </a>
+          <a class="nav-link" routerLink="/revision-final" routerLinkActive="active">
+            <svg lucideBadgeCheck class="icon"></svg>
+            <span>Revision Final</span>
+          </a>
+        }
+
+        @case ('supervisor') {
+          <a class="nav-link" routerLink="/relacion-evaluados" routerLinkActive="active">
+            <svg lucideClipboardList class="icon"></svg>
+            <span>Relacion de Evaluados</span>
+          </a>
+        }
+
+        @case ('evaluador') {
+          <a class="nav-link" routerLink="/fichas-evaluacion" routerLinkActive="active">
+            <svg lucideFileText class="icon"></svg>
+            <span>Fichas de Evaluacion</span>
+          </a>
+        }
+
+        @case ('veedor') {
+          <a class="nav-link" [routerLink]="veedorRoute()" routerLinkActive="active">
+            <svg lucideEye class="icon"></svg>
+            <span>Ficha de Veedor</span>
+          </a>
+        }
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <a class="nav-link" routerLink="/perfil" routerLinkActive="active">
+        <svg lucideSettings class="icon"></svg>
+        <span>Configuracion</span>
+      </a>
+      <button class="nav-link nav-button" type="button" (click)="logout()">
+        <svg lucideLogOut class="icon"></svg>
+        <span>Cerrar sesion</span>
+      </button>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <strong class="topbar-title">SISTEMA DE CONTROL DE ACCESO</strong>
+
+    <div class="topbar-actions">
+      <a class="user-chip" routerLink="/perfil">
+        <div class="avatar">{{ profileInfo().initials }}</div>
+        <div class="user-meta">
+          <strong>{{ profileInfo().userName }}</strong><br />
+          <span class="subtext">{{ profileInfo().userMeta }}</span>
+        </div>
+      </a>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <router-outlet />
+  </main>
+</div>

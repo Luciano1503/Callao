@@ -1,0 +1,142 @@
+<section>
+  <div class="breadcrumb">
+    <a class="text-link" routerLink="/usuarios">Usuarios</a>
+    <span>/</span>
+    <span>Editar usuario</span>
+  </div>
+
+  <header class="page-header page-header-compact">
+    <div>
+      <h1 class="page-title page-title-strong">Editar usuario</h1>
+      <p class="page-copy">Actualice los datos del usuario. El DNI no puede modificarse.</p>
+    </div>
+    <a class="btn btn-secondary" routerLink="/usuarios">
+      <svg lucideArrowLeft class="icon"></svg>
+      <span>Volver</span>
+    </a>
+  </header>
+
+  @if (isLoading()) {
+    <p class="loading-card">Cargando datos del usuario...</p>
+  } @else if (!user()) {
+    <div class="form-error relation-message">No se encontró el usuario con el DNI indicado.</div>
+  } @else {
+    @let u = user()!;
+
+    @if (errorMessage()) {
+      <div class="form-error relation-message" style="margin-bottom: 16px;">{{ errorMessage() }}</div>
+    }
+    @if (successMessage()) {
+      <div class="form-success relation-message" style="margin-bottom: 16px;">{{ successMessage() }}</div>
+    }
+
+    <div class="profile-grid edit-user-grid">
+      <!-- Panel lateral con info fija -->
+      <aside>
+        <section class="panel-card profile-card">
+          <div class="profile-photo">
+            <div class="avatar profile-avatar">{{ initials }}</div>
+          </div>
+
+          <div class="profile-heading">
+            <h2>{{ nombres() || u.nombres }}</h2>
+            <span class="badge role-badge">
+              <span class="status-dot blue"></span>
+              {{ u.rolNombre }}
+            </span>
+          </div>
+
+          <div class="info-list">
+            <div>
+              <span class="subtext">DNI (no modificable)</span><br />
+              <strong style="font-size: 18px; color: var(--text-muted);">{{ u.dni }}</strong>
+            </div>
+            <div>
+              <span class="subtext">Estado actual</span><br />
+              @if (u.estado === 'ACTIVO') {
+                <span class="badge success">ACTIVO</span>
+              } @else {
+                <span class="badge danger">INACTIVO</span>
+              }
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Formulario editable -->
+      <div>
+        <section class="panel-card form-card edit-form-card">
+          <h2 class="form-section-title bordered-title">Datos del usuario</h2>
+
+          <div class="form-grid">
+            <label class="field-group">
+              <span class="field-label">Nombres completos</span>
+              <input class="field"
+                type="text"
+                placeholder="Nombres completos"
+                [value]="nombres()"
+                (input)="updateField('nombres', $event)" />
+            </label>
+
+            <label class="field-group">
+              <span class="field-label">Correo electrónico</span>
+              <input class="field"
+                type="email"
+                placeholder="correo@ejemplo.com"
+                [value]="correo()"
+                (input)="updateField('correo', $event)" />
+            </label>
+
+            <label class="field-group">
+              <span class="field-label">Celular (9 dígitos, opcional)</span>
+              <input class="field"
+                type="text"
+                maxlength="9"
+                placeholder="987654321"
+                [value]="celular()"
+                (input)="updateField('celular', $event)" />
+            </label>
+
+            <label class="field-group">
+              <span class="field-label">Rol de usuario</span>
+              <select class="select" [value]="selectedRolId()" (change)="updateRol($event)">
+                @for (role of roles(); track role.id) {
+                  <option [value]="role.id">{{ role.nombre }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="field-group">
+              <span class="field-label">Estado del usuario</span>
+              <div class="actions-row" style="margin-top: 6px;">
+                <label class="radio-label">
+                  <input type="radio" name="status" value="ACTIVO"
+                    [checked]="selectedEstado() === 'ACTIVO'"
+                    (change)="updateEstado('ACTIVO')" />
+                  <span class="status-dot success"></span>
+                  <span>Activo</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="status" value="INACTIVO"
+                    [checked]="selectedEstado() === 'INACTIVO'"
+                    (change)="updateEstado('INACTIVO')" />
+                  <span class="status-dot danger"></span>
+                  <span>Inactivo</span>
+                </label>
+              </div>
+            </label>
+          </div>
+
+          <div class="form-actions" style="margin-top: 28px;">
+            <button class="btn btn-primary" type="button"
+              [disabled]="isSaving()"
+              (click)="save()">
+              <svg lucideSave class="icon"></svg>
+              <span>{{ isSaving() ? 'Guardando...' : 'Guardar cambios' }}</span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  }
+</section>

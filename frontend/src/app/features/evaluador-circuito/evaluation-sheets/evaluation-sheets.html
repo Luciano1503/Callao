@@ -1,0 +1,284 @@
+<section>
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Evaluador de centro de circuito</p>
+      <h1 class="page-title">Fichas de Evaluacion</h1>
+      <p class="page-copy">Consulta y edicion de fichas mientras la evaluacion no haya sido finalizada por el administrador.</p>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="form-error relation-message">{{ errorMessage() }}</div>
+  }
+
+  @if (successMessage()) {
+    <div class="form-success relation-message">{{ successMessage() }}</div>
+  }
+
+  <section class="evaluation-layout">
+    <div class="panel-card filters evaluation-filters">
+      <label class="field-group">
+        <span class="field-label">DNI</span>
+        <span class="input-shell">
+          <svg lucideSearch class="icon"></svg>
+          <input class="field" inputmode="numeric" maxlength="8" placeholder="Buscar DNI" [value]="filterDni()" (input)="updateFilter('dni', $event)" />
+        </span>
+      </label>
+      <label class="field-group">
+        <span class="field-label">Nombre</span>
+        <input class="field" placeholder="Nombre del evaluado" [value]="filterName()" (input)="updateFilter('name', $event)" />
+      </label>
+      <label class="field-group">
+        <span class="field-label">Grupo</span>
+        <select class="select" [value]="filterGroup()" (change)="updateFilter('group', $event)">
+          <option value="">Todos los grupos</option>
+          @for (group of groupOptions(); track group) {
+            <option [value]="group">Grupo {{ group }}</option>
+          }
+        </select>
+      </label>
+      <label class="field-group">
+        <span class="field-label">Categoria</span>
+        <select class="select" [value]="filterCategory()" (change)="updateFilter('category', $event)">
+          <option value="">Todas</option>
+          @for (category of categories(); track category.id) {
+            <option [value]="category.id">{{ category.codigo }}</option>
+          }
+        </select>
+      </label>
+      <button class="btn btn-secondary" type="button">
+        <svg lucideListFilter class="icon"></svg>
+        <span>Filtrar</span>
+      </button>
+    </div>
+
+    <aside class="summary-panel">
+      <span>Resumen de hoy</span>
+      <strong>{{ sheets().length }} ficha{{ sheets().length === 1 ? '' : 's' }}</strong>
+      <small>{{ pendingCount() }} pendiente{{ pendingCount() === 1 ? '' : 's' }} de revision final</small>
+    </aside>
+  </section>
+
+  <section class="panel-card compact-table-card">
+    <div class="table-wrap">
+      <table class="data-table sheets-table">
+        <thead>
+          <tr>
+            <th>Grupo</th>
+            <th>DNI</th>
+            <th>Evaluado</th>
+            <th>Categoria</th>
+            <th>Placa</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (isLoading()) {
+            <tr>
+              <td class="empty-cell" colspan="9">Cargando fichas de evaluacion...</td>
+            </tr>
+          } @else {
+            @for (sheet of filteredSheets(); track sheet.evaluadoId) {
+              <tr [class.is-locked]="!canEdit(sheet)">
+                <td><strong>Grupo {{ sheet.numeroGrupo }}</strong></td>
+                <td>{{ sheet.dni }}</td>
+                <td>{{ sheet.nombres }}</td>
+                <td><span class="badge">{{ sheet.categoriaCodigo }}</span></td>
+                <td>{{ sheet.placa || '-' }}</td>
+                <td>{{ formatDate(sheet.registradoEn) }}</td>
+                <td>{{ formatTime(sheet.registradoEn) }}</td>
+                <td><span class="badge {{ statusClass(sheet.resultadoFinal) }}">{{ statusLabel(sheet.resultadoFinal) }}</span></td>
+                <td>
+                  <div class="action-icons">
+                    <button type="button" aria-label="Ver ficha" (click)="openView(sheet)">
+                      <svg lucideEye class="icon"></svg>
+                    </button>
+                    <button type="button" aria-label="Editar ficha" (click)="openEdit(sheet)" [disabled]="!canEdit(sheet)">
+                      <svg lucidePencil class="icon"></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td class="empty-cell" colspan="9">No se encontraron fichas con los filtros aplicados.</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  @if (isDetailLoading()) {
+    <div class="modal-backdrop">
+      <section class="modal-card modal-card-small">
+        <p class="loading-card">Cargando detalle de ficha...</p>
+      </section>
+    </div>
+  }
+
+  @if (selectedDetail(); as detail) {
+    <div class="modal-backdrop">
+      <section class="modal-card evaluator-modal">
+        <header class="modal-header">
+          <div>
+            <p class="eyebrow">Grupo {{ detail.ficha.numeroGrupo }} / {{ detail.ficha.dni }}</p>
+            <h2>{{ detail.ficha.nombres }}</h2>
+            <p>{{ detail.ficha.categoriaCodigo }} - {{ detail.ficha.placa || 'Sin placa' }}</p>
+          </div>
+          <button class="btn btn-secondary" type="button" (click)="closeDetail()">Cerrar</button>
+        </header>
+
+        <section class="evaluator-context-grid">
+          <div>
+            <span>Fecha original</span>
+            <strong>{{ formatDate(detail.ficha.registradoEn) }}</strong>
+          </div>
+          <div>
+            <span>Hora original</span>
+            <strong>{{ formatTime(detail.ficha.registradoEn) }}</strong>
+          </div>
+          <div>
+            <span>Estado admin</span>
+            <strong><span class="badge {{ statusClass(detail.ficha.resultadoFinal) }}">{{ statusLabel(detail.ficha.resultadoFinal) }}</span></strong>
+          </div>
+          <div>
+            <span>Ultima edicion circuito</span>
+            <strong>{{ formatDateTime(detail.ficha.circuitoActualizadoEn) }}</strong>
+          </div>
+          <div>
+            <span>Evaluador</span>
+            <strong>{{ detail.ficha.evaluadorNombre || 'Sin registro' }}</strong>
+          </div>
+        </section>
+
+        <section class="panel-card evaluator-observations">
+          <label class="field-group">
+            <span class="field-label">Observaciones del evaluador de circuito</span>
+            @if (detailMode() === 'edit' && canEdit(detail.ficha)) {
+              <textarea
+                class="textarea"
+                rows="3"
+                [value]="circuitObservations()"
+                (input)="updateCircuitObservations($event)"
+                placeholder="Ingrese observaciones generales de la revision del circuito..."
+              ></textarea>
+            } @else {
+              <p>{{ detail.ficha.observacionesCircuito || 'Sin observaciones registradas.' }}</p>
+            }
+          </label>
+        </section>
+
+        <section class="review-grid">
+          @for (review of detail.revisiones; track review.tipoVeedorCodigo) {
+            <article class="panel-card review-card">
+              <header class="review-card-header">
+                <div>
+                  <h3>{{ review.tipoVeedorNombre }}</h3>
+                  <p>
+                    @if (reviewIsRegistered(review)) {
+                      Asignado por {{ review.veedorNombre || 'veedor no identificado' }} el {{ formatDateTime(review.registradoEn) }}
+                    } @else {
+                      Sin ficha registrada por el veedor.
+                    }
+                  </p>
+                </div>
+                <span class="badge {{ reviewIsRegistered(review) ? 'success' : 'warning' }}">
+                  {{ reviewIsRegistered(review) ? 'Registrada' : 'Pendiente' }}
+                </span>
+              </header>
+
+              @if (detailMode() === 'edit' && canEdit(detail.ficha) && reviewIsRegistered(review)) {
+                <div class="criteria-edit-grid">
+                  <section>
+                    <h4>Habilidad</h4>
+                    <div class="criteria-check-grid">
+                      @for (criterion of criteriaFor(review.tipoVeedorCodigo, 'habilidad'); track criterion.id) {
+                        <label class="criteria-check" [title]="criterion.descripcion">
+                          <input
+                            type="checkbox"
+                            [checked]="isSelected(review.tipoVeedorCodigo, 'habilidad', criterion.id)"
+                            (change)="toggleCriterion(review.tipoVeedorCodigo, 'habilidad', criterion.id, $event)"
+                          />
+                          <span>{{ criterion.siglas }}</span>
+                        </label>
+                      } @empty {
+                        <span class="subtext">Sin criterios disponibles.</span>
+                      }
+                    </div>
+                  </section>
+
+                  <section>
+                    <h4>Reglamento</h4>
+                    <div class="criteria-check-grid">
+                      @for (criterion of criteriaFor(review.tipoVeedorCodigo, 'reglamento'); track criterion.id) {
+                        <label class="criteria-check" [title]="criterion.descripcion">
+                          <input
+                            type="checkbox"
+                            [checked]="isSelected(review.tipoVeedorCodigo, 'reglamento', criterion.id)"
+                            (change)="toggleCriterion(review.tipoVeedorCodigo, 'reglamento', criterion.id, $event)"
+                          />
+                          <span>{{ criterion.siglas }}</span>
+                        </label>
+                      } @empty {
+                        <span class="subtext">Sin reglamentos disponibles.</span>
+                      }
+                    </div>
+                  </section>
+                </div>
+
+                <label class="field-group review-note">
+                  <span class="field-label">Observacion sobre este evaluado</span>
+                  <textarea
+                    class="textarea"
+                    rows="3"
+                    [value]="editReviews()[review.tipoVeedorCodigo].observacionEvaluado"
+                    (input)="updateReviewObservation(review.tipoVeedorCodigo, $event)"
+                  ></textarea>
+                </label>
+              } @else {
+                <div class="review-read-grid">
+                  <div>
+                    <span>Habilidad</span>
+                    <p>{{ siglas(review.habilidades) || '-' }}</p>
+                  </div>
+                  <div>
+                    <span>Reglamento</span>
+                    <p>{{ siglas(review.reglamentos) || '-' }}</p>
+                  </div>
+                  <div class="review-note-read">
+                    <span>Observacion</span>
+                    <p>{{ review.observacionEvaluado || review.observacionesFicha || 'Sin observaciones.' }}</p>
+                  </div>
+                  <div>
+                    <span>Ultima actualizacion</span>
+                    <p>{{ formatDateTime(review.actualizadoEn) }}</p>
+                  </div>
+                </div>
+              }
+            </article>
+          }
+        </section>
+
+        <footer class="modal-footer">
+          @if (detailMode() === 'edit' && canEdit(detail.ficha)) {
+            <button class="btn btn-secondary" type="button" (click)="closeDetail()">Cancelar</button>
+            <button class="btn btn-primary" type="button" (click)="saveDetail()" [disabled]="isSaving()">
+              <svg lucideSave class="icon"></svg>
+              <span>{{ isSaving() ? 'Guardando...' : 'Guardar cambios' }}</span>
+            </button>
+          } @else if (canEdit(detail.ficha)) {
+            <button class="btn btn-primary" type="button" (click)="switchToEdit()">
+              <svg lucidePencil class="icon"></svg>
+              <span>Editar ficha</span>
+            </button>
+          }
+        </footer>
+      </section>
+    </div>
+  }
+</section>

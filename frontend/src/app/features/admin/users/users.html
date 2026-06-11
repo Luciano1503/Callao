@@ -1,0 +1,158 @@
+<section>
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Mantenimiento de usuarios</h1>
+      <p class="page-copy">Gestione los accesos y perfiles del sistema.</p>
+    </div>
+    <a class="btn btn-primary" routerLink="/usuarios/nuevo">
+      <svg lucidePlus class="icon"></svg>
+      <span>Nuevo usuario</span>
+    </a>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="form-error relation-message">{{ errorMessage() }}</div>
+  }
+
+  @if (successMessage()) {
+    <div class="form-success relation-message">{{ successMessage() }}</div>
+  }
+
+  <section class="panel-card filters" aria-label="Filtros de usuarios">
+    <label class="field-group">
+      <span class="field-label">Buscar</span>
+      <span class="input-shell">
+        <svg lucideSearch class="icon"></svg>
+        <input class="field" placeholder="DNI, nombre o correo" [value]="searchFilter()" (input)="updateSearch($event)" />
+      </span>
+    </label>
+
+    <label class="field-group">
+      <span class="field-label">Rol</span>
+      <select class="select" [value]="roleFilter()" (change)="updateRole($event)">
+        <option value="">Todos los roles</option>
+        @for (role of roles(); track role.id) {
+          <option [value]="role.codigo">{{ role.nombre }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field-group">
+      <span class="field-label">Zona</span>
+      <select class="select" [value]="zoneFilter()" (change)="updateZone($event)">
+        <option value="">Todas las zonas</option>
+        @for (zone of zones; track zone.value) {
+          <option [value]="zone.value">{{ zone.label }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="field-group">
+      <span class="field-label">Estado</span>
+      <select class="select" [value]="statusFilter()" (change)="updateStatus($event)">
+        <option value="">Todos los estados</option>
+        <option value="ACTIVO">Activo</option>
+        <option value="INACTIVO">Inactivo</option>
+      </select>
+    </label>
+
+    <button class="btn btn-secondary" type="button" (click)="loadUsers()">
+      <svg lucideListFilter class="icon"></svg>
+      <span>Filtrar</span>
+    </button>
+  </section>
+
+  <section class="panel-card">
+    <div class="table-wrap">
+      <table class="data-table users-table">
+        <colgroup>
+          <col class="col-dni" />
+          <col class="col-name" />
+          <col class="col-role" />
+          <col class="col-zone" />
+          <col class="col-status" />
+          <col class="col-actions" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>DNI</th>
+            <th>Nombres</th>
+            <th>Rol</th>
+            <th>Zona</th>
+            <th>Estado</th>
+            <th style="text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (isLoading()) {
+            <tr>
+              <td colspan="6">Cargando usuarios...</td>
+            </tr>
+          } @else if (filteredUsers().length === 0) {
+            <tr>
+              <td colspan="6">No hay usuarios que coincidan con los filtros.</td>
+            </tr>
+          }
+
+          @for (user of filteredUsers(); track user.id) {
+            <tr>
+              <td>{{ user.dni }}</td>
+              <td><strong>{{ user.nombres }}</strong></td>
+              <td>{{ user.rolNombre }}</td>
+              <td>{{ zoneLabelForUser(user) }}</td>
+              <td>
+                @if (user.estado === 'ACTIVO') {
+                  <span class="badge success">ACTIVO</span>
+                } @else {
+                  <span class="badge danger">INACTIVO</span>
+                }
+              </td>
+              <td>
+                <div class="action-icons">
+                  <button
+                    type="button"
+                    aria-label="Copiar datos de contacto"
+                    class="user-detail-btn"
+                    [class.copied]="copiedUserId() === user.id"
+                    [title]="'✉ ' + user.correo + '\n📞 ' + (user.celular || 'sin número')"
+                    (click)="copyContact(user)">
+                    @if (copiedUserId() === user.id) {
+                      <span style="font-size: 10px; font-weight: 700; color: var(--success); white-space: nowrap;">✓ Copiado</span>
+                    } @else {
+                      <svg lucideEye class="icon"></svg>
+                    }
+                  </button>
+                  <button type="button" aria-label="Editar usuario" [routerLink]="['/usuarios', user.dni, 'editar']">
+                    <svg lucidePencil class="icon"></svg>
+                  </button>
+                  <button
+                    class="danger"
+                    type="button"
+                    aria-label="Dar de baja usuario"
+                    [disabled]="user.estado === 'INACTIVO' || isCurrentUser(user) || isDeleting() === user.id"
+                    (click)="deactivateUser(user)"
+                  >
+                    <svg lucideTrash2 class="icon"></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="table-footer">
+      <span>Mostrando {{ filteredUsers().length }} de {{ users().length }} registro{{ users().length === 1 ? '' : 's' }}</span>
+      <div class="pager">
+        <button type="button" disabled>
+          <svg lucideChevronLeft class="icon"></svg>
+        </button>
+        <button class="active" type="button">1</button>
+        <button type="button" disabled>
+          <svg lucideChevronRight class="icon"></svg>
+        </button>
+      </div>
+    </footer>
+  </section>
+</section>

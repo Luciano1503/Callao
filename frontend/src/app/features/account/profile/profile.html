@@ -1,0 +1,127 @@
+<section>
+  <header class="page-header-compact" style="margin-bottom: 24px;">
+    <h1 class="page-title page-title-strong">Configuracion de Perfil</h1>
+    <p class="page-copy">Administre su informacion personal y credenciales de acceso.</p>
+  </header>
+
+  @if (successMessage()) {
+    <div class="form-success relation-message">{{ successMessage() }}</div>
+  }
+
+  @if (errorMessage()) {
+    <div class="form-error relation-message">{{ errorMessage() }}</div>
+  }
+
+  @if (currentUser(); as user) {
+  <div class="profile-grid">
+    <aside>
+      <section class="panel-card profile-card">
+        <div class="profile-photo">
+          <div class="avatar profile-avatar">{{ initials() }}</div>
+        </div>
+
+        <div class="profile-heading">
+          <h2>{{ user.nombres }}</h2>
+          <span class="badge role-badge">
+            <span class="status-dot blue"></span>
+            {{ user.rolNombre }}
+          </span>
+        </div>
+
+        <div class="info-list">
+          <div>
+            <span class="subtext">DNI / Documento</span><br />
+            <strong style="font-size: 18px;">{{ user.dni }}</strong>
+          </div>
+          <div>
+            <span class="subtext">Area Asignada</span><br />
+            <strong style="font-size: 18px; line-height: 1.45;">{{ areaLabel() }}</strong>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <div style="display: grid; gap: 28px;">
+      <section class="panel-card form-card" style="max-width: none;">
+        <h2 class="form-section-title" style="border-bottom: 1px solid var(--line-soft); padding-bottom: 18px;">Informacion de Contacto</h2>
+        <div class="form-grid">
+          <label class="field-group">
+            <span class="field-label">Correo Electronico Institucional</span>
+            <span class="input-shell">
+              <svg lucideMail class="icon"></svg>
+              <input class="field" [value]="user.correo" readonly />
+            </span>
+            <span class="subtext">El correo institucional no puede ser modificado por el usuario.</span>
+          </label>
+
+          <label class="field-group">
+            <span class="field-label">Telefono de Contacto</span>
+            <span class="input-shell">
+              <svg lucideSmartphone class="icon"></svg>
+              <input class="field" [value]="user.celular || '-'" readonly />
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel-card form-card" style="max-width: none;">
+        <h2 class="form-section-title" style="border-bottom: 1px solid var(--line-soft); padding-bottom: 18px;">Cambio de Contrasena</h2>
+
+        <form (submit)="changePassword($event)" style="display: grid; gap: 22px; max-width: 560px;">
+          <label class="field-group">
+            <span class="field-label">Contrasena Actual</span>
+            <span class="input-shell">
+              <svg lucideKey class="icon"></svg>
+              <input class="field has-trailing" name="oldPassword" [type]="showOldPassword() ? 'text' : 'password'" placeholder="********" required />
+              <button class="icon-button trailing" type="button" aria-label="Mostrar u ocultar contrasena actual" (click)="toggleOldPassword()">
+                @if (showOldPassword()) {
+                  <svg lucideEye class="icon"></svg>
+                } @else {
+                  <svg lucideEyeOff class="icon"></svg>
+                }
+              </button>
+            </span>
+          </label>
+
+          <label class="field-group">
+            <span class="field-label">Nueva Contrasena</span>
+            <span class="input-shell">
+              <svg lucideLockKeyholeOpen class="icon"></svg>
+              <input class="field has-trailing" name="newPassword" [type]="showNewPassword() ? 'text' : 'password'" placeholder="********" required />
+              <button class="icon-button trailing" type="button" aria-label="Mostrar u ocultar contrasena nueva" (click)="toggleNewPassword()">
+                @if (showNewPassword()) {
+                  <svg lucideEye class="icon"></svg>
+                } @else {
+                  <svg lucideEyeOff class="icon"></svg>
+                }
+              </button>
+            </span>
+            <span class="subtext">- Minimo 8 caracteres<br />- Al menos una mayuscula y un numero</span>
+          </label>
+
+          <label class="field-group">
+            <span class="field-label">Confirmar Nueva Contrasena</span>
+            <span class="input-shell">
+              <svg lucideLockKeyholeOpen class="icon"></svg>
+              <input class="field has-trailing" name="confirmNewPassword" [type]="showConfirmPassword() ? 'text' : 'password'" placeholder="********" required />
+              <button class="icon-button trailing" type="button" aria-label="Mostrar u ocultar confirmacion" (click)="toggleConfirmPassword()">
+                @if (showConfirmPassword()) {
+                  <svg lucideEye class="icon"></svg>
+                } @else {
+                  <svg lucideEyeOff class="icon"></svg>
+                }
+              </button>
+            </span>
+          </label>
+
+          <div class="form-actions" style="margin-top: 10px; border-top: 1px solid var(--line-soft); padding-top: 22px;">
+            <button class="btn btn-primary" type="submit" [disabled]="isSubmitting()">
+              {{ isSubmitting() ? 'Actualizando...' : 'Actualizar Contrasena' }}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+  }
+</section>

@@ -1,0 +1,32 @@
+<section class="page-heading">
+  <p class="eyebrow">Sistema web</p>
+  <h1>Callao</h1>
+  <p class="summary">Base inicial para los modulos del sistema.</p>
+</section>
+
+<section class="dashboard-grid" aria-label="Estado inicial">
+  <article class="status-card primary">
+    <span class="status-dot" [class.online]="apiStatus() === 'UP'"></span>
+    <p class="label">API REST</p>
+    <strong>{{ apiStatus() }}</strong>
+    <span>{{ application() }}</span>
+  </article>
+
+  <article class="status-card">
+    <p class="label">Frontend</p>
+    <strong>Angular</strong>
+    <span>Routing, servicios y entorno configurados.</span>
+  </article>
+
+  <article class="status-card">
+    <p class="label">Base de datos</p>
+    <strong>PostgreSQL</strong>
+    <span>Conexion preparada por variables de entorno.</span>
+  </article>
+
+  <article class="status-card">
+    <p class="label">Ultima lectura</p>
+    <strong>{{ checkedAt() }}</strong>
+    <span>Endpoint /api/v1/health</span>
+  </article>
+</section>

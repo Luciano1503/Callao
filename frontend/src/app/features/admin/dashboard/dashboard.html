@@ -1,0 +1,114 @@
+<section>
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Panel de Control</h1>
+      <p class="page-copy">Resumen de usuarios y actividad del sistema.</p>
+    </div>
+    <div class="actions-row">
+      <a class="btn btn-secondary" routerLink="/usuarios">
+        <svg lucideSearch class="icon"></svg>
+        <span>Ver usuarios</span>
+      </a>
+      <a class="btn btn-primary" routerLink="/usuarios/nuevo">
+        <svg lucidePlus class="icon"></svg>
+        <span>Nuevo usuario</span>
+      </a>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <p class="loading-card">Cargando datos del sistema...</p>
+  } @else {
+    <div class="stats-grid">
+      <article class="stat-card">
+        <div class="stat-card-top">
+          <div class="stat-icon">
+            <svg lucideUsers class="icon"></svg>
+          </div>
+        </div>
+        <p class="stat-label">Total Usuarios</p>
+        <p class="stat-value">{{ totalUsers() }}</p>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-card-top">
+          <div class="stat-icon" style="background: #d4edda; color: #28a745;">
+            <svg lucideUserCheck class="icon"></svg>
+          </div>
+        </div>
+        <p class="stat-label">Usuarios Activos</p>
+        <p class="stat-value" style="color: var(--success);">{{ activeUsers() }}</p>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-card-top">
+          <div class="stat-icon" style="background: #fce8e6; color: var(--danger);">
+            <svg lucideUserX class="icon"></svg>
+          </div>
+        </div>
+        <p class="stat-label">Usuarios Inactivos</p>
+        <p class="stat-value" style="color: var(--danger);">{{ inactiveUsers() }}</p>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-card-top">
+          <div class="stat-icon" style="background: #e0e7ff; color: var(--primary);">
+            <svg lucideShieldCheck class="icon"></svg>
+          </div>
+        </div>
+        <p class="stat-label">Roles en uso</p>
+        <p class="stat-value">{{ totalRoles() }}</p>
+      </article>
+    </div>
+
+    <section class="panel-card">
+      <div class="card-header">
+        <h2 class="card-title">Usuarios registrados recientemente</h2>
+        <a class="text-link" routerLink="/usuarios" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px;">
+          Ver todos →
+        </a>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>DNI</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Registrado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (recentUsers().length === 0) {
+              <tr>
+                <td colspan="5" class="empty-cell">No hay usuarios registrados aún.</td>
+              </tr>
+            }
+            @for (u of recentUsers(); track u.id) {
+              <tr>
+                <td>
+                  <div class="user-cell">
+                    <span class="user-initials">{{ initials(u.nombres) }}</span>
+                    <strong>{{ u.nombres }}</strong>
+                  </div>
+                </td>
+                <td>{{ u.dni }}</td>
+                <td>{{ u.rolNombre }}</td>
+                <td>
+                  @if (u.estado === 'ACTIVO') {
+                    <span class="badge success">ACTIVO</span>
+                  } @else {
+                    <span class="badge danger">INACTIVO</span>
+                  }
+                </td>
+                <td>{{ formatDate(u.creadoEn) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</section>

@@ -1,0 +1,165 @@
+<section>
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Supervisor de evaluados</p>
+      <h1 class="page-title">Relacion de Evaluados</h1>
+      <p class="page-copy">Registro por grupos numericos de 10 personas. Todos los evaluados inician en estado Pendiente.</p>
+    </div>
+    <button class="btn btn-primary" type="button" (click)="createGroup()" [disabled]="isCreatingGroup() || !canCreateNewGroup()">
+      <svg lucidePlus class="icon"></svg>
+      <span>{{ isCreatingGroup() ? 'Creando...' : 'Nuevo grupo' }}</span>
+    </button>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="form-error relation-message">{{ errorMessage() }}</div>
+  }
+
+  @if (successMessage()) {
+    <div class="form-success relation-message">{{ successMessage() }}</div>
+  }
+
+  @if (isLoading()) {
+    <section class="panel-card loading-card">Cargando relacion de evaluados...</section>
+  } @else if (activeGroup(); as group) {
+    <div [style.opacity]="isChangingGroup() ? '0.5' : '1'" [style.pointer-events]="isChangingGroup() ? 'none' : 'auto'" style="transition: opacity 0.2s ease;">
+      <section class="supervision-summary">
+        <div class="panel-card group-controls">
+          <label class="field-group">
+            <span class="field-label">Grupo</span>
+            <select class="select" (change)="selectGroup($event)" [disabled]="isChangingGroup()">
+              @for (summary of groups(); track summary.id) {
+                <option [value]="summary.id" [selected]="summary.id === group.id">Grupo {{ summary.numeroGrupo }} ({{ summary.totalEvaluados }}/10)</option>
+              } @empty {
+                <option [value]="group.id" selected>Grupo {{ group.numeroGrupo }}</option>
+              }
+            </select>
+        </label>
+          <label class="field-group">
+            <span class="field-label">Color asignado</span>
+            <span class="color-select-shell">
+              <span class="color-dot" [style.background]="group.colorHex"></span>
+              <select class="select color-select" (change)="updateGroupColor($event)" [disabled]="group.estado !== 'BORRADOR' || isUpdatingColor() || isChangingGroup()">
+                <option value="" disabled [selected]="!group.colorId">Seleccione un color</option>
+                @for (color of colors(); track color.id) {
+                  <option [value]="color.id" [selected]="color.id === group.colorId">{{ color.nombre }}</option>
+                }
+              </select>
+            </span>
+          </label>
+        <div class="field-group">
+          <span class="field-label">Fecha y hora de registro</span>
+          <span class="info-pill">
+            <svg lucideCalendar class="icon"></svg>
+            {{ formatDate(group.registradoEn) }}
+            <svg lucideClock class="icon"></svg>
+            {{ formatTime(group.registradoEn) }}
+          </span>
+        </div>
+      </div>
+
+      <aside class="panel-card progress-card">
+        <strong>Progreso de Registro</strong>
+        <span class="progress-count">{{ group.totalEvaluados }} / {{ group.capacidadMaxima }}</span>
+        <div class="progress-track"><span [style.width.%]="progressPercent()"></span></div>
+        <small>{{ formatStatus(group.estado) }}</small>
+      </aside>
+    </section>
+
+    <section class="panel-card relation-form-card">
+      <div class="form-section-title relation-form-title">
+        <svg lucideUserRoundPlus class="icon"></svg>
+        <span>Agregar evaluado</span>
+      </div>
+      <form class="relation-entry-form" (submit)="addEvaluated($event)">
+        <fieldset class="relation-fieldset" [disabled]="isSubmitting() || !group.puedeAgregar">
+          <label class="field-group">
+            <span class="field-label">DNI <span class="required">*</span></span>
+            <input class="field" name="dni" inputmode="numeric" maxlength="8" pattern="[0-9]{8}" placeholder="Ingrese DNI" required />
+          </label>
+          <label class="field-group">
+            <span class="field-label">Nombres y Apellidos <span class="required">*</span></span>
+            <input class="field" name="nombres" placeholder="Nombre completo" required />
+          </label>
+          <label class="field-group">
+            <span class="field-label">Categoria <span class="required">*</span></span>
+            <select class="select" name="categoriaId" required>
+              <option value="">Seleccione categoria</option>
+              @for (category of categories(); track category.id) {
+                <option [value]="category.id">{{ category.codigo }} - {{ category.nombre }}</option>
+              }
+            </select>
+          </label>
+          <label class="field-group">
+            <span class="field-label">Placa</span>
+            <input class="field" name="placa" maxlength="20" placeholder="Ej. F4G-902" />
+          </label>
+        </fieldset>
+        <div class="form-actions relation-form-actions">
+          <button class="btn btn-primary" type="submit" [disabled]="isSubmitting() || !group.puedeAgregar">
+            <svg lucideSave class="icon"></svg>
+            <span>{{ isSubmitting() ? 'Guardando...' : 'Guardar evaluado' }}</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel-card compact-table-card relation-list-card">
+      <div class="table-wrap">
+        <table class="data-table relation-table relation-table-basic">
+          <thead>
+            <tr>
+              <th>N</th>
+              <th>DNI</th>
+              <th>Nombres y Apellidos</th>
+              <th>Categoria</th>
+              <th>Placa</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (person of group.evaluados; track person.id) {
+              <tr>
+                <td>{{ person.numeroFila }}</td>
+                <td>{{ person.dni }}</td>
+                <td><strong>{{ person.nombres }}</strong></td>
+                <td>{{ person.categoriaCodigo }}</td>
+                <td>{{ person.placa || '-' }}</td>
+                <td><span class="badge warning">{{ formatStatus(person.resultadoFinal) }}</span></td>
+              </tr>
+            } @empty {
+              <tr>
+                <td class="empty-cell" colspan="6">Sin evaluados registrados.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="bottom-workspace">
+      <div class="panel-card observations-card">
+        <label class="field-group">
+          <span class="field-label">Observaciones generales del grupo</span>
+          <textarea
+            class="textarea"
+            rows="5"
+            [value]="observations()"
+            (input)="updateObservations($event)"
+            [disabled]="group.estado !== 'BORRADOR'"
+            placeholder="Ingrese observaciones del proceso de evaluacion del grupo..."
+          ></textarea>
+        </label>
+      </div>
+      <aside class="final-card">
+        <h2>Guardar grupo</h2>
+        <p>{{ group.totalEvaluados }} de {{ group.capacidadMaxima }} evaluados registrados.</p>
+        <button class="btn btn-primary btn-full" type="button" (click)="finalizeGroup()" [disabled]="isFinalizing() || !canFinalizeGroup()">
+          <svg lucideCheckCircle2 class="icon"></svg>
+          <span>{{ isFinalizing() ? 'Guardando...' : 'Finalizar grupo' }}</span>
+        </button>
+      </aside>
+    </section>
+    </div>
+  }
+</section>
