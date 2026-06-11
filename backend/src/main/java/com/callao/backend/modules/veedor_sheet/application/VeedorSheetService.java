@@ -58,6 +58,10 @@ public class VeedorSheetService {
 		if (FINALIZED_STATUS.equals(group.estado())) {
 			throw new BusinessException("La evaluacion ya fue finalizada por el administrador.");
 		}
+		
+		if ("BORRADOR".equals(group.estado())) {
+			throw new BusinessException("El supervisor todavia no ha finalizado este grupo de evaluados.");
+		}
 
 		List<SaveVeedorSheetRowRequest> rows = request.evaluados() == null ? List.of() : request.evaluados();
 		List<Long> evaluatedIds = rows.stream()

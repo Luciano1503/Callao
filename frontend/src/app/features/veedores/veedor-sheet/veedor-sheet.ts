@@ -57,7 +57,10 @@ export class VeedorSheet {
   protected readonly isSaving = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
-  protected readonly isReadOnly = computed(() => this.sheet()?.estadoGrupo === 'FINALIZADO');
+  protected readonly isReadOnly = computed(() => {
+    const estado = this.sheet()?.estadoGrupo;
+    return estado === 'FINALIZADO' || estado === 'BORRADOR';
+  });
 
   constructor(route: ActivatedRoute) {
     route.paramMap.subscribe((params) => {

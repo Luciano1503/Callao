@@ -152,7 +152,15 @@
     </section>
 
     <footer class="sheet-actions">
-      <p class="subtext">Si el administrador finaliza la evaluacion, esta ficha quedara en solo lectura.</p>
+      <p class="subtext">
+        @if (currentSheet.estadoGrupo === 'BORRADOR') {
+          El supervisor todavia no finaliza este grupo. No puedes calificar aun.
+        } @else if (currentSheet.estadoGrupo === 'FINALIZADO') {
+          El administrador ha finalizado esta evaluacion. Esta ficha es de solo lectura.
+        } @else {
+          Si el administrador finaliza la evaluacion, esta ficha quedara en solo lectura.
+        }
+      </p>
       <button class="btn btn-primary" type="button" [disabled]="isSaving() || isReadOnly() || rows().length === 0" (click)="saveSheet()">
         <svg lucideSave class="icon"></svg>
         <span>{{ isSaving() ? 'Guardando...' : 'Guardar ficha' }}</span>
