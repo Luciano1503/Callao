@@ -75,11 +75,11 @@
         <fieldset class="relation-fieldset" [disabled]="isSubmitting() || !group.puedeAgregar">
           <label class="field-group">
             <span class="field-label">DNI <span class="required">*</span></span>
-            <input class="field" name="dni" inputmode="numeric" maxlength="8" pattern="[0-9]{8}" placeholder="Ingrese DNI" required />
+            <input class="field" name="dni" inputmode="numeric" maxlength="8" minlength="8" pattern="[0-9]{8}" placeholder="Ingrese DNI" required oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
           </label>
           <label class="field-group">
             <span class="field-label">Nombres y Apellidos <span class="required">*</span></span>
-            <input class="field" name="nombres" placeholder="Nombre completo" required />
+            <input class="field" name="nombres" pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+" placeholder="Nombre completo" required oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')" />
           </label>
           <label class="field-group">
             <span class="field-label">Categoria <span class="required">*</span></span>

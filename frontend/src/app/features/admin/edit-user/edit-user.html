@@ -73,9 +73,11 @@
               <span class="field-label">Nombres completos</span>
               <input class="field"
                 type="text"
+                pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
                 placeholder="Nombres completos"
                 [value]="nombres()"
-                (input)="updateField('nombres', $event)" />
+                (input)="updateField('nombres', $event)"
+                oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')" />
             </label>
 
             <label class="field-group">
