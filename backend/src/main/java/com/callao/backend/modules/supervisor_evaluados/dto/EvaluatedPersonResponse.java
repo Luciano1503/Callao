@@ -13,6 +13,7 @@ public record EvaluatedPersonResponse(
 	String categoriaCodigo,
 	String categoriaNombre,
 	String resultadoFinal,
-	LocalDateTime creadoEn
+	LocalDateTime creadoEn,
+	boolean esVip
 ) {
 }

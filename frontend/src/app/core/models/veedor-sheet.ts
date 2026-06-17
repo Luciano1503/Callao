@@ -3,6 +3,7 @@ export interface VeedorSheetRow {
   numeroFila: number;
   dni: string;
   nombres: string;
+  esVip: boolean;
   categoriaCodigo: string;
   placa: string | null;
   resultadoFinal: 'PENDIENTE' | 'APROBADO' | 'DESAPROBADO';
@@ -30,6 +31,7 @@ export interface SaveVeedorSheetRequest {
   veedorId: number;
   grupoId: number;
   observaciones: string;
+  finalizado?: boolean;
   evaluados: SaveVeedorSheetRowRequest[];
 }
 

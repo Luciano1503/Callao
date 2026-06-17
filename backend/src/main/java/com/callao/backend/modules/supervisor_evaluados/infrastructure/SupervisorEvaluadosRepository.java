@@ -107,7 +107,8 @@ public class SupervisorEvaluadosRepository {
 			       c.codigo AS categoria_codigo,
 			       c.nombre AS categoria_nombre,
 			       e.resultado_final,
-			       e.creado_en
+			       e.creado_en,
+			       e.es_vip
 			FROM callao.evaluados_grupo e
 			INNER JOIN callao.categorias c ON c.id = e.categoria_id
 			WHERE e.grupo_id = ?
@@ -124,7 +125,8 @@ public class SupervisorEvaluadosRepository {
 				rs.getString("categoria_codigo"),
 				rs.getString("categoria_nombre"),
 				rs.getString("resultado_final"),
-				rs.getTimestamp("creado_en").toLocalDateTime()
+				rs.getTimestamp("creado_en").toLocalDateTime(),
+				rs.getBoolean("es_vip")
 			),
 			groupId
 		);
@@ -155,16 +157,18 @@ public class SupervisorEvaluadosRepository {
 				dni,
 				nombres,
 				placa,
-				categoria_id
+				categoria_id,
+				es_vip
 			)
-			VALUES (?, ?, ?, ?, ?, ?)
+			VALUES (?, ?, ?, ?, ?, ?, ?)
 			""",
 			row.grupoId(),
 			row.numeroFila(),
 			row.dni(),
 			row.nombres(),
 			row.placa(),
-			row.categoriaId()
+			row.categoriaId(),
+			row.esVip()
 		);
 	}
 
@@ -195,6 +199,20 @@ public class SupervisorEvaluadosRepository {
 			  AND supervisor_id = ?
 			""",
 			colorId,
+			groupId,
+			supervisorId
+		);
+	}
+
+	public void updateGroupRegistrationDate(Long groupId, Long supervisorId, LocalDateTime registrationDate) {
+		jdbcTemplate.update(
+			"""
+			UPDATE callao.grupos_evaluacion
+			SET registrado_en = ?
+			WHERE id = ?
+			  AND supervisor_id = ?
+			""",
+			registrationDate,
 			groupId,
 			supervisorId
 		);
@@ -303,7 +321,8 @@ public class SupervisorEvaluadosRepository {
 		String dni,
 		String nombres,
 		String placa,
-		Long categoriaId
+		Long categoriaId,
+		boolean esVip
 	) {
 	}
 

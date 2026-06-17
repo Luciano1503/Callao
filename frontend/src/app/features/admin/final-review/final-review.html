@@ -124,6 +124,10 @@
         </div>
       </div>
       <p class="subtext review-context">Mostrando habilidades y reglamentos registrados por todos los veedores en simultaneo para facilitar la calificacion.</p>
+      <div class="legend-box" style="margin-top: 0.5rem; margin-bottom: 1rem; padding: 0.5rem 0.75rem; background: var(--bg-tertiary); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+        <span class="badge badge-muy-grave" style="margin-right: 0.5rem;">MUY GRAVE</span>
+        <span class="subtext">Las infracciones resaltadas en rojo causan desaprobacion automatica.</span>
+      </div>
       <div class="table-wrap">
         <table class="data-table final-people-table">
           <thead>
@@ -138,7 +142,9 @@
           <tbody>
             @for (person of detail.evaluados; track person.id) {
               <tr>
-                <td>{{ person.numeroFila }}</td>
+                <td [style.background-color]="person.esVip ? '#b3e5fc' : 'transparent'">
+                  {{ person.numeroFila }}
+                </td>
                 <td>
                   <strong>{{ person.nombres }}</strong>
                   <div class="subtext">{{ person.dni }}</div>
@@ -153,8 +159,24 @@
                       <div class="veedor-review-item" style="background: var(--bg-secondary); padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
                         <strong style="display: block; margin-bottom: 0.25rem;">{{ review.tipoVeedorCodigo.replace('_', ' ') }}</strong>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                          <div><span class="subtext">Habilidad:</span> {{ criterionText(review.habilidades) }}</div>
-                          <div><span class="subtext">Reglamento:</span> {{ criterionText(review.reglamentos) }}</div>
+                          <div><span class="subtext">Habilidad:</span> 
+                            <div style="display: inline-flex; gap: 0.25rem; flex-wrap: wrap; margin-left: 0.25rem;">
+                              @for (crit of review.habilidades; track crit.siglas) {
+                                <span class="badge" [class.badge-muy-grave]="crit.gravedad === 'MUY GRAVE'">{{ crit.siglas }}</span>
+                              } @empty {
+                                <span>-</span>
+                              }
+                            </div>
+                          </div>
+                          <div><span class="subtext">Reglamento:</span> 
+                            <div style="display: inline-flex; gap: 0.25rem; flex-wrap: wrap; margin-left: 0.25rem;">
+                              @for (crit of review.reglamentos; track crit.siglas) {
+                                <span class="badge" [class.badge-muy-grave]="crit.gravedad === 'MUY GRAVE'">{{ crit.siglas }}</span>
+                              } @empty {
+                                <span>-</span>
+                              }
+                            </div>
+                          </div>
                         </div>
                       </div>
                     } @empty {

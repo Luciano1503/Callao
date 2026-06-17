@@ -10,6 +10,7 @@ public record FinalReviewPersonResponse(
 	String categoriaCodigo,
 	String placa,
 	String resultadoFinal,
+	boolean esVip,
 	List<FinalReviewVeedorResponse> revisiones
 ) {
 }

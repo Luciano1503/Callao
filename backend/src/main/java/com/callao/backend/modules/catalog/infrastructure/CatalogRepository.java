@@ -109,4 +109,19 @@ public class CatalogRepository {
 			tipoCodigo
 		);
 	}
+
+	public List<com.callao.backend.modules.catalog.dto.VehiculoCatalogResponse> findVehiculos() {
+		return jdbcTemplate.query(
+			"""
+			SELECT id, placa
+			FROM callao.vehiculos
+			WHERE activo = TRUE
+			ORDER BY placa
+			""",
+			(rs, rowNum) -> new com.callao.backend.modules.catalog.dto.VehiculoCatalogResponse(
+				rs.getLong("id"),
+				rs.getString("placa")
+			)
+		);
+	}
 }

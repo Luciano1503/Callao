@@ -8,6 +8,7 @@ public record EvaluatorSheetSummaryResponse(
 	Integer numeroGrupo,
 	String dni,
 	String nombres,
+	boolean esVip,
 	Long categoriaId,
 	String categoriaCodigo,
 	String categoriaNombre,

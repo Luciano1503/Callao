@@ -5,6 +5,12 @@
       <h1 class="page-title">Ficha de Evaluacion: {{ position.label }}</h1>
       <p class="page-copy">Registro de habilidad y reglamento. El resultado final solo lo modifica el administrador.</p>
     </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" type="button" (click)="printSheet()">
+        <svg lucidePrinter class="icon"></svg>
+        <span>Imprimir</span>
+      </button>
+    </div>
   </header>
 
   <div class="assignment-pill" aria-label="Tipo de veedor asignado">
@@ -83,7 +89,9 @@
         <tbody>
           @for (row of rows(); track row.index) {
             <tr>
-              <td>{{ row.index }}</td>
+              <td [style.background-color]="row.esVip ? '#b3e5fc' : 'transparent'">
+                {{ row.index }}
+              </td>
               <td><span class="badge">{{ row.category }}</span></td>
               <td>
                 <details class="table-multi-picker" name="veedor-picker">
@@ -145,7 +153,7 @@
           rows="5"
           [value]="observations()"
           [disabled]="isReadOnly()"
-          (input)="updateObservations($event)"
+          (change)="updateObservations($event)"
           placeholder="Ingrese observaciones generales de la ficha..."
         ></textarea>
       </label>

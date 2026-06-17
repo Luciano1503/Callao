@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
-import { CategoriaCatalog, ColorCatalog, CriterioCatalog, RolCatalog, VeedorCriteriosCatalog } from '../models/catalog';
+import { CategoriaCatalog, ColorCatalog, CriterioCatalog, RolCatalog, VeedorCriteriosCatalog, VehiculoCatalog } from '../models/catalog';
 import { ApiService } from './api.service';
 
 @Injectable({
@@ -20,6 +20,10 @@ export class CatalogService {
 
   getColores(): Observable<ColorCatalog[]> {
     return this.api.get<ColorCatalog[]>('/catalogos/colores').pipe(map((response) => response.data));
+  }
+
+  getVehiculos(): Observable<VehiculoCatalog[]> {
+    return this.api.get<VehiculoCatalog[]>('/catalogos/vehiculos').pipe(map((response) => response.data));
   }
 
   getCriterios(tipo: string): Observable<CriterioCatalog[]> {

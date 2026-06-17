@@ -1,6 +1,7 @@
 package com.callao.backend.modules.final_review.application;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Set;
 
@@ -33,7 +34,9 @@ public class FinalReviewService {
 		FinalReviewGroupResponse group = repository.findGroup(groupId)
 			.orElseThrow(() -> new BusinessException("El grupo seleccionado no existe."));
 
-		return new FinalReviewDetailResponse(group, repository.findPeople(groupId));
+		Map<String, String> observacionesVeedores = repository.findObservacionesVeedores(groupId);
+
+		return new FinalReviewDetailResponse(group, repository.findPeople(groupId), observacionesVeedores);
 	}
 
 	@Transactional

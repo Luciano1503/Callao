@@ -24,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 public class EvaluatorCircuitService {
 
 	private static final String FINALIZED_STATUS = "FINALIZADO";
-	private static final String PENDING_RESULT = "PENDIENTE";
 
 	private final EvaluatorCircuitRepository repository;
 
@@ -52,6 +51,8 @@ public class EvaluatorCircuitService {
 		for (UpdateEvaluatorReviewRequest review : reviews) {
 			updateReview(sheet, review);
 		}
+
+		repository.recalculateResultadosFinales(sheet.evaluadoId());
 
 		return findDetail(sheet.evaluadoId());
 	}
@@ -87,7 +88,7 @@ public class EvaluatorCircuitService {
 	}
 
 	private void ensureEditable(EvaluatorSheetSummaryResponse sheet) {
-		if (FINALIZED_STATUS.equals(sheet.estadoGrupo()) || !PENDING_RESULT.equals(sheet.resultadoFinal())) {
+		if (FINALIZED_STATUS.equals(sheet.estadoGrupo())) {
 			throw new BusinessException("La evaluacion ya fue finalizada por el administrador y no admite modificaciones.");
 		}
 	}

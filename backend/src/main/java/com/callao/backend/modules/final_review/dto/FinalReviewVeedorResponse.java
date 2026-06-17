@@ -4,7 +4,7 @@ import java.util.List;
 
 public record FinalReviewVeedorResponse(
 	String tipoVeedorCodigo,
-	List<String> habilidades,
-	List<String> reglamentos
+	List<FinalReviewCriterionResponse> habilidades,
+	List<FinalReviewCriterionResponse> reglamentos
 ) {
 }

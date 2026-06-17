@@ -37,6 +37,7 @@ public class EvaluatorCircuitRepository {
 			       e.categoria_id,
 			       c.codigo AS categoria_codigo,
 			       c.nombre AS categoria_nombre,
+			       e.es_vip,
 			       e.placa,
 			       e.resultado_final,
 			       g.estado AS estado_grupo,
@@ -70,6 +71,7 @@ public class EvaluatorCircuitRepository {
 				       e.categoria_id,
 				       c.codigo AS categoria_codigo,
 				       c.nombre AS categoria_nombre,
+				       e.es_vip,
 				       e.placa,
 				       e.resultado_final,
 				       g.estado AS estado_grupo,
@@ -324,6 +326,30 @@ public class EvaluatorCircuitRepository {
 		);
 	}
 
+	public void recalculateResultadosFinales(Long evaluadoId) {
+		if (evaluadoId == null || evaluadoId <= 0) {
+			return;
+		}
+
+		jdbcTemplate.update(
+			"""
+			UPDATE callao.evaluados_grupo e
+			SET resultado_final = CASE 
+			    WHEN EXISTS (
+			        SELECT 1 FROM callao.fichas_veedor_detalle d
+			        JOIN callao.fichas_veedor_detalle_criterios dc ON dc.ficha_veedor_detalle_id = d.id
+			        JOIN callao.criterios_evaluacion ce ON ce.id = dc.criterio_evaluacion_id
+			        WHERE d.evaluado_grupo_id = e.id AND ce.gravedad = 'MUY GRAVE'
+			    ) THEN 'DESAPROBADO'
+			    ELSE 'APROBADO'
+			END,
+			actualizado_en = CURRENT_TIMESTAMP
+			WHERE e.id = ? AND (SELECT estado FROM callao.grupos_evaluacion WHERE id = e.grupo_id) != 'FINALIZADO'
+			""",
+			evaluadoId
+		);
+	}
+
 	private EvaluatorSheetSummaryResponse mapSummary(java.sql.ResultSet rs) throws java.sql.SQLException {
 		return new EvaluatorSheetSummaryResponse(
 			rs.getLong("evaluado_id"),
@@ -331,6 +357,7 @@ public class EvaluatorCircuitRepository {
 			rs.getInt("numero_grupo"),
 			rs.getString("dni"),
 			rs.getString("nombres"),
+			rs.getBoolean("es_vip"),
 			rs.getLong("categoria_id"),
 			rs.getString("categoria_codigo"),
 			rs.getString("categoria_nombre"),

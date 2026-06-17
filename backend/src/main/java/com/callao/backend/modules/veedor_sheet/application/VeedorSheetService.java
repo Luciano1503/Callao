@@ -59,9 +59,7 @@ public class VeedorSheetService {
 			throw new BusinessException("La evaluacion ya fue finalizada por el administrador.");
 		}
 		
-		if ("BORRADOR".equals(group.estado())) {
-			throw new BusinessException("El supervisor todavia no ha finalizado este grupo de evaluados.");
-		}
+		
 
 		List<SaveVeedorSheetRowRequest> rows = request.evaluados() == null ? List.of() : request.evaluados();
 		List<Long> evaluatedIds = rows.stream()
@@ -86,7 +84,8 @@ public class VeedorSheetService {
 			group.id(),
 			tipo.id(),
 			request.veedorId(),
-			blankToNull(request.observaciones())
+			blankToNull(request.observaciones()),
+			Boolean.TRUE.equals(request.finalizado())
 		);
 
 		for (SaveVeedorSheetRowRequest row : rows) {
@@ -97,6 +96,8 @@ public class VeedorSheetService {
 			);
 			repository.replaceCriteria(detalleId, mergeCriteria(row.habilidadIds(), row.reglamentoIds()));
 		}
+
+		repository.recalculateResultadosFinales(evaluatedIds);
 
 		return buildResponse(group, tipo);
 	}

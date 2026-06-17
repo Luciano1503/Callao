@@ -148,6 +148,7 @@ public class VeedorSheetRepository {
 			       e.numero_fila,
 			       e.dni,
 			       e.nombres,
+			       e.es_vip,
 			       e.placa,
 			       c.codigo AS categoria_codigo,
 			       e.resultado_final,
@@ -169,7 +170,7 @@ public class VeedorSheetRepository {
 			LEFT JOIN callao.criterios_evaluacion ce ON ce.id = dc.criterio_evaluacion_id
 			LEFT JOIN callao.tipos_criterio_evaluacion tc ON tc.id = ce.tipo_criterio_id
 			WHERE e.grupo_id = ?
-			GROUP BY e.id, e.numero_fila, e.dni, e.nombres, e.placa, c.codigo, e.resultado_final, d.observacion
+			GROUP BY e.id, e.numero_fila, e.dni, e.nombres, e.es_vip, e.placa, c.codigo, e.resultado_final, d.observacion
 			ORDER BY e.numero_fila ASC, e.id ASC
 			""",
 			(rs, rowNum) -> new VeedorSheetRowResponse(
@@ -177,6 +178,7 @@ public class VeedorSheetRepository {
 				rs.getInt("numero_fila"),
 				rs.getString("dni"),
 				rs.getString("nombres"),
+				rs.getBoolean("es_vip"),
 				rs.getString("categoria_codigo"),
 				rs.getString("placa"),
 				rs.getString("resultado_final"),
@@ -189,7 +191,8 @@ public class VeedorSheetRepository {
 		);
 	}
 
-	public Long upsertFicha(Long groupId, Long tipoVeedorId, Long veedorId, String observaciones) {
+	public Long upsertFicha(Long groupId, Long tipoVeedorId, Long veedorId, String observaciones, boolean isFinalizado) {
+		String estado = isFinalizado ? "FINALIZADO" : "GUARDADO";
 		return jdbcTemplate.queryForObject(
 			"""
 			INSERT INTO callao.fichas_veedor (
@@ -199,12 +202,12 @@ public class VeedorSheetRepository {
 				observaciones,
 				estado
 			)
-			VALUES (?, ?, ?, ?, 'GUARDADO')
+			VALUES (?, ?, ?, ?, ?)
 			ON CONFLICT (grupo_id, tipo_veedor_id)
 			DO UPDATE SET
 				veedor_id = EXCLUDED.veedor_id,
 				observaciones = EXCLUDED.observaciones,
-				estado = 'GUARDADO',
+				estado = EXCLUDED.estado,
 				actualizado_en = CURRENT_TIMESTAMP
 			RETURNING id
 			""",
@@ -212,7 +215,8 @@ public class VeedorSheetRepository {
 			groupId,
 			tipoVeedorId,
 			veedorId,
-			observaciones
+			observaciones,
+			estado
 		);
 	}
 
@@ -297,6 +301,30 @@ public class VeedorSheetRepository {
 		);
 
 		return count != null && count == criterionIds.size();
+	}
+
+	public void recalculateResultadosFinales(List<Long> evaluadoIds) {
+		if (evaluadoIds == null || evaluadoIds.isEmpty()) {
+			return;
+		}
+
+		jdbcTemplate.update(
+			"""
+			UPDATE callao.evaluados_grupo e
+			SET resultado_final = CASE 
+			    WHEN EXISTS (
+			        SELECT 1 FROM callao.fichas_veedor_detalle d
+			        JOIN callao.fichas_veedor_detalle_criterios dc ON dc.ficha_veedor_detalle_id = d.id
+			        JOIN callao.criterios_evaluacion ce ON ce.id = dc.criterio_evaluacion_id
+			        WHERE d.evaluado_grupo_id = e.id AND ce.gravedad = 'MUY GRAVE'
+			    ) THEN 'DESAPROBADO'
+			    ELSE 'APROBADO'
+			END,
+			actualizado_en = CURRENT_TIMESTAMP
+			WHERE e.id = ANY(?) AND (SELECT estado FROM callao.grupos_evaluacion WHERE id = e.grupo_id) != 'FINALIZADO'
+			""",
+			(Object) evaluadoIds.toArray(Long[]::new)
+		);
 	}
 
 	private GroupRow mapGroup(java.sql.ResultSet rs) throws java.sql.SQLException {

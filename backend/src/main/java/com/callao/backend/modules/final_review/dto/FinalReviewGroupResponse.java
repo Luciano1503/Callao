@@ -10,6 +10,7 @@ public record FinalReviewGroupResponse(
 	String colorHex,
 	String estado,
 	Integer totalEvaluados,
-	LocalDateTime registradoEn
+	LocalDateTime registradoEn,
+	String observaciones
 ) {
 }

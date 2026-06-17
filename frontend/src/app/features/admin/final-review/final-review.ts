@@ -185,9 +185,6 @@ export class FinalReview {
     return 'Pendiente';
   }
 
-  protected criterionText(values: string[]): string {
-    return values.length ? values.join(', ') : '-';
-  }
 
   private loadInitialData(): void {
     forkJoin({

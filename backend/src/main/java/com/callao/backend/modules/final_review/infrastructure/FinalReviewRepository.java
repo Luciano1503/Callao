@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import com.callao.backend.modules.final_review.dto.FinalReviewGroupResponse;
 import com.callao.backend.modules.final_review.dto.FinalReviewPersonResponse;
 import com.callao.backend.modules.final_review.dto.FinalReviewVeedorResponse;
+import com.callao.backend.modules.final_review.dto.FinalReviewCriterionResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,11 +37,12 @@ public class FinalReviewRepository {
 			         ELSE 'PENDIENTE'
 			       END AS estado_revision,
 			       COUNT(e.id) AS total_evaluados,
-			       g.registrado_en
+			       g.registrado_en,
+			       g.observaciones
 			FROM callao.grupos_evaluacion g
 			INNER JOIN callao.colores_grupo c ON c.id = g.color_id
 			LEFT JOIN callao.evaluados_grupo e ON e.grupo_id = g.id
-			GROUP BY g.id, g.numero_grupo, g.color_id, c.nombre, c.codigo_hex, g.estado, g.registrado_en
+			GROUP BY g.id, g.numero_grupo, g.color_id, c.nombre, c.codigo_hex, g.estado, g.registrado_en, g.observaciones
 			ORDER BY g.numero_grupo DESC, g.id DESC
 			""",
 			(rs, rowNum) -> new FinalReviewGroupResponse(
@@ -51,7 +53,8 @@ public class FinalReviewRepository {
 				rs.getString("color_hex"),
 				rs.getString("estado_revision"),
 				rs.getInt("total_evaluados"),
-				rs.getTimestamp("registrado_en").toLocalDateTime()
+				rs.getTimestamp("registrado_en").toLocalDateTime(),
+				rs.getString("observaciones")
 			)
 		);
 	}
@@ -88,7 +91,8 @@ public class FinalReviewRepository {
 			       e.nombres,
 			       e.placa,
 			       c.codigo AS categoria_codigo,
-			       e.resultado_final
+			       e.resultado_final,
+			       e.es_vip
 			FROM callao.evaluados_grupo e
 			INNER JOIN callao.categorias c ON c.id = e.categoria_id
 			WHERE e.grupo_id = ?
@@ -101,7 +105,8 @@ public class FinalReviewRepository {
 				rs.getString("nombres"),
 				rs.getString("categoria_codigo"),
 				rs.getString("placa"),
-				rs.getString("resultado_final")
+				rs.getString("resultado_final"),
+				rs.getBoolean("es_vip")
 			),
 			groupId
 		);
@@ -111,7 +116,8 @@ public class FinalReviewRepository {
 			SELECT d.evaluado_grupo_id,
 			       tv.codigo AS tipo_veedor_codigo,
 			       ce.siglas,
-			       tc.codigo AS tipo_criterio_codigo
+			       tc.codigo AS tipo_criterio_codigo,
+			       ce.gravedad
 			FROM callao.fichas_veedor_detalle d
 			INNER JOIN callao.fichas_veedor fv ON fv.id = d.ficha_veedor_id
 			INNER JOIN callao.tipos_veedor tv ON tv.id = fv.tipo_veedor_id
@@ -124,7 +130,8 @@ public class FinalReviewRepository {
 				rs.getLong("evaluado_grupo_id"),
 				rs.getString("tipo_veedor_codigo"),
 				rs.getString("siglas"),
-				rs.getString("tipo_criterio_codigo")
+				rs.getString("tipo_criterio_codigo"),
+				rs.getString("gravedad")
 			),
 			groupId
 		);
@@ -134,7 +141,7 @@ public class FinalReviewRepository {
 			builders
 				.computeIfAbsent(row.evaluadoId(), k -> new HashMap<>())
 				.computeIfAbsent(row.tipoVeedorCodigo(), k -> new VeedorBuilder(row.tipoVeedorCodigo()))
-				.addCriterion(row.siglas(), row.tipoCriterioCodigo());
+				.addCriterion(row.siglas(), row.tipoCriterioCodigo(), row.gravedad());
 		}
 
 		List<FinalReviewPersonResponse> result = new ArrayList<>();
@@ -152,11 +159,29 @@ public class FinalReviewRepository {
 				p.categoriaCodigo(),
 				p.placa(),
 				p.resultadoFinal(),
+				p.esVip(),
 				revisiones
 			));
 		}
 
 		return result;
+	}
+
+	public Map<String, String> findObservacionesVeedores(Long groupId) {
+		Map<String, String> observacionesMap = new HashMap<>();
+		jdbcTemplate.query(
+			"""
+			SELECT tv.codigo, fv.observaciones
+			FROM callao.fichas_veedor fv
+			INNER JOIN callao.tipos_veedor tv ON tv.id = fv.tipo_veedor_id
+			WHERE fv.grupo_id = ? AND fv.observaciones IS NOT NULL
+			""",
+			rs -> {
+				observacionesMap.put(rs.getString("codigo"), rs.getString("observaciones"));
+			},
+			groupId
+		);
+		return observacionesMap;
 	}
 
 	public boolean groupExists(Long groupId) {
@@ -211,30 +236,33 @@ public class FinalReviewRepository {
 		String nombres,
 		String categoriaCodigo,
 		String placa,
-		String resultadoFinal
+		String resultadoFinal,
+		boolean esVip
 	) {}
 
 	private record CriteriaRow(
 		Long evaluadoId,
 		String tipoVeedorCodigo,
 		String siglas,
-		String tipoCriterioCodigo
+		String tipoCriterioCodigo,
+		String gravedad
 	) {}
 
 	private static class VeedorBuilder {
 		private final String tipoVeedorCodigo;
-		private final List<String> habilidades = new ArrayList<>();
-		private final List<String> reglamentos = new ArrayList<>();
+		private final List<FinalReviewCriterionResponse> habilidades = new ArrayList<>();
+		private final List<FinalReviewCriterionResponse> reglamentos = new ArrayList<>();
 
 		public VeedorBuilder(String tipoVeedorCodigo) {
 			this.tipoVeedorCodigo = tipoVeedorCodigo;
 		}
 
-		public void addCriterion(String siglas, String tipoCriterioCodigo) {
+		public void addCriterion(String siglas, String tipoCriterioCodigo, String gravedad) {
+			FinalReviewCriterionResponse criterion = new FinalReviewCriterionResponse(siglas, gravedad);
 			if ("REGLAMENTO_TRANSITO".equals(tipoCriterioCodigo)) {
-				reglamentos.add(siglas);
+				reglamentos.add(criterion);
 			} else {
-				habilidades.add(siglas);
+				habilidades.add(criterion);
 			}
 		}
 

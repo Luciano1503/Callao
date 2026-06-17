@@ -49,12 +49,13 @@
           </label>
         <div class="field-group">
           <span class="field-label">Fecha y hora de registro</span>
-          <span class="info-pill">
-            <svg lucideCalendar class="icon"></svg>
-            {{ formatDate(group.registradoEn) }}
-            <svg lucideClock class="icon"></svg>
-            {{ formatTime(group.registradoEn) }}
-          </span>
+          <input
+            type="datetime-local"
+            class="field"
+            [value]="formatDateTimeForInput(group.registradoEn)"
+            (change)="updateGroupDate($event)"
+            [disabled]="group.estado !== 'BORRADOR' || isUpdatingDate() || isChangingGroup()"
+          />
         </div>
       </div>
 
@@ -90,9 +91,32 @@
               }
             </select>
           </label>
-          <label class="field-group">
-            <span class="field-label">Placa</span>
-            <input class="field" name="placa" maxlength="20" placeholder="Ej. F4G-902" />
+          <label class="field-group" style="position: relative;">
+            <span class="field-label">Placa <span class="required">*</span></span>
+            <input class="field" 
+                   name="placa" 
+                   autocomplete="off"
+                   [value]="placaSearchTerm()" 
+                   (input)="onPlacaInput($event)"
+                   (focus)="showPlacaDropdown.set(true)"
+                   (blur)="onPlacaBlur()"
+                   placeholder="Buscar o escribir placa"
+                   required />
+            
+            @if (showPlacaDropdown()) {
+              <ul class="autocomplete-dropdown">
+                @for (vehicle of filteredVehicles(); track vehicle.id) {
+                  <li (mousedown)="selectPlaca(vehicle.placa)">{{ vehicle.placa }}</li>
+                }
+                @if (filteredVehicles().length === 0) {
+                  <li class="autocomplete-empty">No se encontraron placas</li>
+                }
+              </ul>
+            }
+          </label>
+          <label class="field-group checkbox-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;">
+            <input type="checkbox" name="esVip" class="checkbox" />
+            <span class="field-label" style="margin-bottom: 0;">Es VIP</span>
           </label>
         </fieldset>
         <div class="form-actions relation-form-actions">
@@ -114,17 +138,19 @@
               <th>Nombres y Apellidos</th>
               <th>Categoria</th>
               <th>Placa</th>
+              <th>Fecha</th>
               <th>Estado</th>
             </tr>
           </thead>
           <tbody>
             @for (person of group.evaluados; track person.id) {
               <tr>
-                <td>{{ person.numeroFila }}</td>
+                <td [style.background-color]="person.esVip ? '#b3e5fc' : 'transparent'">{{ person.numeroFila }}</td>
                 <td>{{ person.dni }}</td>
                 <td><strong>{{ person.nombres }}</strong></td>
                 <td>{{ person.categoriaCodigo }}</td>
                 <td>{{ person.placa || '-' }}</td>
+                <td>{{ formatDateTime(person.creadoEn) }}</td>
                 <td><span class="badge warning">{{ formatStatus(person.resultadoFinal) }}</span></td>
               </tr>
             } @empty {

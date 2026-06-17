@@ -1,13 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { LucideCalendar, LucideClock, LucideSave } from '@lucide/angular';
+import { LucideCalendar, LucideClock, LucideSave, LucidePrinter } from '@lucide/angular';
 
 import { CriterioCatalog } from '../../../core/models/catalog';
 import { EvaluatedGroupSummary } from '../../../core/models/evaluated-group';
 import { VeedorSheet as VeedorSheetModel, VeedorSheetRow } from '../../../core/models/veedor-sheet';
 import { AuthService } from '../../../core/services/auth.service';
 import { CatalogService } from '../../../core/services/catalog.service';
+import { ExportService } from '../../../core/services/export.service';
 import { VeedorSheetService } from '../../../core/services/veedor-sheet.service';
 
 interface VeedorType {
@@ -23,6 +24,7 @@ interface VeedorRow {
   category: string;
   plate: string | null;
   result: string;
+  esVip: boolean;
   skills: number[];
   regulations: number[];
   observation: string | null;
@@ -37,13 +39,14 @@ const VEEDORES: VeedorType[] = [
 
 @Component({
   selector: 'app-veedor-sheet',
-  imports: [LucideCalendar, LucideClock, LucideSave],
+  imports: [LucideCalendar, LucideClock, LucideSave, LucidePrinter],
   templateUrl: './veedor-sheet.html'
 })
 export class VeedorSheet {
   private readonly authService = inject(AuthService);
   private readonly catalogService = inject(CatalogService);
   private readonly veedorSheetService = inject(VeedorSheetService);
+  private readonly exportService = inject(ExportService);
 
   protected position: VeedorType = VEEDORES[0];
   protected readonly skillOptions = signal<CriterioCatalog[]>([]);
@@ -58,8 +61,9 @@ export class VeedorSheet {
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected readonly isReadOnly = computed(() => {
-    const estado = this.sheet()?.estadoGrupo;
-    return estado === 'FINALIZADO' || estado === 'BORRADOR';
+    const sheet = this.sheet();
+    if (!sheet) return true;
+    return sheet.estadoGrupo === 'FINALIZADO' || sheet.estadoFicha === 'FINALIZADO';
   });
 
   constructor(route: ActivatedRoute) {
@@ -112,10 +116,12 @@ export class VeedorSheet {
         };
       })
     );
+    this.silentSaveSheet();
   }
 
   protected updateObservations(event: Event): void {
     this.observations.set((event.target as HTMLTextAreaElement).value);
+    this.silentSaveSheet();
   }
 
   protected saveSheet(): void {
@@ -133,6 +139,7 @@ export class VeedorSheet {
       veedorId: currentUser.usuarioId,
       grupoId: sheet.grupoId,
       observaciones: this.observations(),
+      finalizado: true,
       evaluados: this.rows().map((row) => ({
         evaluadoGrupoId: row.evaluadoGrupoId,
         observacion: row.observation,
@@ -148,6 +155,32 @@ export class VeedorSheet {
       error: (error: unknown) => {
         this.isSaving.set(false);
         this.errorMessage.set(this.resolveError(error));
+      }
+    });
+  }
+
+  private silentSaveSheet(): void {
+    const sheet = this.sheet();
+    const currentUser = this.authService.currentUser();
+
+    if (!sheet || !currentUser) {
+      return;
+    }
+
+    this.veedorSheetService.saveSheet(this.position.route, {
+      veedorId: currentUser.usuarioId,
+      grupoId: sheet.grupoId,
+      observaciones: this.observations(),
+      finalizado: false,
+      evaluados: this.rows().map((row) => ({
+        evaluadoGrupoId: row.evaluadoGrupoId,
+        observacion: row.observation,
+        habilidadIds: row.skills,
+        reglamentoIds: row.regulations
+      }))
+    }).subscribe({
+      next: (updatedSheet) => {
+        this.sheet.set(updatedSheet);
       }
     });
   }
@@ -249,6 +282,7 @@ export class VeedorSheet {
       category: row.categoriaCodigo,
       plate: row.placa,
       result: row.resultadoFinal,
+      esVip: row.esVip,
       skills: row.habilidadIds,
       regulations: row.reglamentoIds,
       observation: row.observacion
@@ -266,5 +300,12 @@ export class VeedorSheet {
     }
 
     return error.error?.message ?? 'No se pudo completar la operacion.';
+  }
+
+  protected printSheet(): void {
+    const s = this.sheet();
+    if (s) {
+      this.exportService.exportVeedorSheetToPdf(s, this.skillOptions(), this.regulationOptions());
+    }
   }
 }

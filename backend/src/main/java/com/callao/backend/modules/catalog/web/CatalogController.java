@@ -42,6 +42,11 @@ public class CatalogController {
 		return ResponseEntity.ok(ApiResponse.ok("Colores obtenidos.", catalogService.getColores()));
 	}
 
+	@GetMapping("/vehiculos")
+	public ResponseEntity<ApiResponse<List<com.callao.backend.modules.catalog.dto.VehiculoCatalogResponse>>> getVehiculos() {
+		return ResponseEntity.ok(ApiResponse.ok("Vehículos obtenidos.", catalogService.getVehiculos()));
+	}
+
 	@GetMapping("/criterios/tipos")
 	public ResponseEntity<ApiResponse<List<TipoCriterioCatalogResponse>>> getTiposCriterio() {
 		return ResponseEntity.ok(ApiResponse.ok("Tipos de criterio obtenidos.", catalogService.getTiposCriterio()));

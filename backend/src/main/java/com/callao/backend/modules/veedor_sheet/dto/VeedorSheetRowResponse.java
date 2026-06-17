@@ -7,6 +7,7 @@ public record VeedorSheetRowResponse(
 	Integer numeroFila,
 	String dni,
 	String nombres,
+	boolean esVip,
 	String categoriaCodigo,
 	String placa,
 	String resultadoFinal,

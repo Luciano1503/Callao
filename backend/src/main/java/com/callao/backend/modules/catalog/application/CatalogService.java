@@ -42,6 +42,10 @@ public class CatalogService {
 		return catalogRepository.findColores();
 	}
 
+	public List<com.callao.backend.modules.catalog.dto.VehiculoCatalogResponse> getVehiculos() {
+		return catalogRepository.findVehiculos();
+	}
+
 	public List<TipoCriterioCatalogResponse> getTiposCriterio() {
 		return catalogRepository.findTiposCriterio();
 	}

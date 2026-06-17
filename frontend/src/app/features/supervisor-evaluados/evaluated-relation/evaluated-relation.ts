@@ -3,7 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { LucideCalendar, LucideCheckCircle2, LucideClock, LucidePlus, LucideSave, LucideUserRoundPlus } from '@lucide/angular';
 import { forkJoin } from 'rxjs';
 
-import { CategoriaCatalog, ColorCatalog } from '../../../core/models/catalog';
+import { CategoriaCatalog, ColorCatalog, VehiculoCatalog } from '../../../core/models/catalog';
 import { EvaluatedGroup, EvaluatedGroupSummary } from '../../../core/models/evaluated-group';
 import { AuthService } from '../../../core/services/auth.service';
 import { CatalogService } from '../../../core/services/catalog.service';
@@ -11,7 +11,7 @@ import { SupervisorEvaluadosService } from '../../../core/services/supervisor-ev
 
 @Component({
   selector: 'app-evaluated-relation',
-  imports: [LucideCalendar, LucideCheckCircle2, LucideClock, LucidePlus, LucideSave, LucideUserRoundPlus],
+  imports: [LucideCheckCircle2, LucidePlus, LucideSave, LucideUserRoundPlus],
   templateUrl: './evaluated-relation.html'
 })
 export class EvaluatedRelation {
@@ -21,6 +21,7 @@ export class EvaluatedRelation {
 
   protected readonly categories = signal<CategoriaCatalog[]>([]);
   protected readonly colors = signal<ColorCatalog[]>([]);
+  protected readonly vehicles = signal<VehiculoCatalog[]>([]);
   protected readonly groups = signal<EvaluatedGroupSummary[]>([]);
   protected readonly activeGroup = signal<EvaluatedGroup | null>(null);
   protected readonly observations = signal('');
@@ -29,6 +30,7 @@ export class EvaluatedRelation {
   protected readonly isSubmitting = signal(false);
   protected readonly isCreatingGroup = signal(false);
   protected readonly isUpdatingColor = signal(false);
+  protected readonly isUpdatingDate = signal(false);
   protected readonly isFinalizing = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
@@ -40,6 +42,18 @@ export class EvaluatedRelation {
     }
 
     return Math.round((group.totalEvaluados / group.capacidadMaxima) * 100);
+  });
+
+  protected readonly placaSearchTerm = signal('');
+  protected readonly showPlacaDropdown = signal(false);
+
+  protected readonly filteredVehicles = computed(() => {
+    const term = this.placaSearchTerm().trim().toLowerCase();
+    const list = this.vehicles();
+    if (!term) {
+      return list.slice(0, 5);
+    }
+    return list.filter(v => v.placa.toLowerCase().includes(term)).slice(0, 5);
   });
 
   protected readonly canCreateNewGroup = computed(() => {
@@ -56,11 +70,13 @@ export class EvaluatedRelation {
     forkJoin({
       categories: this.catalogService.getCategorias(),
       colors: this.catalogService.getColores(),
+      vehicles: this.catalogService.getVehiculos(),
       group: this.supervisorService.getCurrentGroup(this.supervisorId())
     }).subscribe({
-      next: ({ categories, colors, group }) => {
+      next: ({ categories, colors, vehicles, group }) => {
         this.categories.set(categories);
         this.colors.set(colors);
+        this.vehicles.set(vehicles);
         this.setActiveGroup(group);
         this.loadGroups();
         this.isLoading.set(false);
@@ -90,6 +106,7 @@ export class EvaluatedRelation {
     const formData = new FormData(form);
     const categoryId = Number(formData.get('categoriaId'));
     const dni = String(formData.get('dni') ?? '').trim();
+    const esVip = formData.get('esVip') === 'on';
 
     if (!/^\d{8}$/.test(dni)) {
       this.errorMessage.set('El DNI debe tener 8 digitos.');
@@ -104,13 +121,15 @@ export class EvaluatedRelation {
       dni,
       nombres: String(formData.get('nombres') ?? '').trim(),
       categoriaId: categoryId,
-      placa: String(formData.get('placa') ?? '').trim()
+      placa: String(formData.get('placa') ?? '').trim(),
+      esVip
     }).subscribe({
       next: (updatedGroup) => {
         this.isSubmitting.set(false);
         this.setActiveGroup(updatedGroup);
         this.loadGroups();
         this.successMessage.set('Evaluado registrado correctamente.');
+        this.placaSearchTerm.set('');
         form.reset();
       },
       error: (error: unknown) => {
@@ -166,6 +185,38 @@ export class EvaluatedRelation {
     });
   }
 
+  protected updateGroupDate(event: Event): void {
+    const group = this.activeGroup();
+    const dateValue = (event.target as HTMLInputElement).value;
+
+    if (!group || !dateValue) {
+      return;
+    }
+
+    // Input type datetime-local does not include seconds or timezone, so we append them.
+    // The value looks like "2023-10-15T14:30"
+    const registradoEn = dateValue.length === 16 ? dateValue + ':00' : dateValue;
+
+    this.clearMessages();
+    this.isUpdatingDate.set(true);
+
+    this.supervisorService.updateGroupDate(group.id, {
+      supervisorId: this.supervisorId(),
+      registradoEn
+    }).subscribe({
+      next: (updatedGroup) => {
+        this.isUpdatingDate.set(false);
+        this.setActiveGroup(updatedGroup);
+        this.loadGroups();
+        this.successMessage.set('Fecha de registro del grupo actualizada correctamente.');
+      },
+      error: (error: unknown) => {
+        this.isUpdatingDate.set(false);
+        this.errorMessage.set(this.resolveError(error));
+      }
+    });
+  }
+
   protected selectGroup(event: Event): void {
     const groupId = Number((event.target as HTMLSelectElement).value);
     if (!groupId) {
@@ -184,6 +235,23 @@ export class EvaluatedRelation {
         this.errorMessage.set(this.resolveError(error));
       }
     });
+  }
+
+  protected onPlacaInput(event: Event): void {
+    this.placaSearchTerm.set((event.target as HTMLInputElement).value);
+    this.showPlacaDropdown.set(true);
+  }
+
+  protected onPlacaBlur(): void {
+    // Timeout allows click event on dropdown item to fire before dropdown disappears
+    setTimeout(() => {
+      this.showPlacaDropdown.set(false);
+    }, 150);
+  }
+
+  protected selectPlaca(placa: string): void {
+    this.placaSearchTerm.set(placa);
+    this.showPlacaDropdown.set(false);
   }
 
   protected finalizeGroup(): void {
@@ -252,6 +320,22 @@ export class EvaluatedRelation {
       hour: '2-digit',
       minute: '2-digit'
     }).format(new Date(value));
+  }
+
+  protected formatDateTimeForInput(value: string | null): string {
+    if (!value) {
+      return '';
+    }
+
+    const date = new Date(value);
+    // datetime-local format is YYYY-MM-DDThh:mm
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
   protected formatStatus(value: string): string {

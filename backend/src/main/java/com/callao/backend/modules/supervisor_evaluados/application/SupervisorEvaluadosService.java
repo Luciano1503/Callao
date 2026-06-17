@@ -81,6 +81,23 @@ public class SupervisorEvaluadosService {
 	}
 
 	@Transactional
+	public EvaluatedGroupResponse updateGroupDate(Long groupId, com.callao.backend.modules.supervisor_evaluados.dto.UpdateGroupDateRequest request) {
+		Long supervisorId = request.supervisorId();
+		validateSupervisor(supervisorId);
+
+		if (request.registradoEn() == null) {
+			throw new BusinessException("La fecha de registro es obligatoria.");
+		}
+
+		GroupRow group = findGroupOrThrow(groupId);
+		ensureGroupBelongsToSupervisor(group, supervisorId);
+		ensureDraft(group);
+
+		repository.updateGroupRegistrationDate(groupId, supervisorId, request.registradoEn());
+		return buildResponse(groupId);
+	}
+
+	@Transactional
 	public EvaluatedGroupResponse addEvaluated(Long groupId, CreateEvaluatedRequest request) {
 		Long supervisorId = request.supervisorId();
 		validateSupervisor(supervisorId);
@@ -113,7 +130,8 @@ public class SupervisorEvaluadosService {
 			dni,
 			clean(request.nombres()),
 			cleanUpper(request.placa()),
-			request.categoriaId()
+			request.categoriaId(),
+			request.esVip()
 		));
 
 		return buildResponse(groupId);

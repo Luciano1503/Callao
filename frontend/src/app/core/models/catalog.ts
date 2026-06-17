@@ -16,6 +16,11 @@ export interface ColorCatalog {
   codigoHex: string;
 }
 
+export interface VehiculoCatalog {
+  id: number;
+  placa: string;
+}
+
 export interface CriterioCatalog {
   id: number;
   tipoCriterioId: number;
@@ -24,6 +29,7 @@ export interface CriterioCatalog {
   codigo: number;
   descripcion: string;
   siglas: string;
+  gravedad?: 'LEVE' | 'GRAVE' | 'MUY GRAVE';
 }
 
 export interface VeedorCriteriosCatalog {

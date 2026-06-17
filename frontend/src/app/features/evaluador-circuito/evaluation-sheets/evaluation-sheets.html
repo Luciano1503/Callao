@@ -84,7 +84,7 @@
             @for (sheet of filteredSheets(); track sheet.evaluadoId) {
               <tr [class.is-locked]="!canEdit(sheet)">
                 <td><strong>Grupo {{ sheet.numeroGrupo }}</strong></td>
-                <td>{{ sheet.dni }}</td>
+                <td [style.background-color]="sheet.esVip ? '#b3e5fc' : 'transparent'">{{ sheet.dni }}</td>
                 <td>{{ sheet.nombres }}</td>
                 <td><span class="badge">{{ sheet.categoriaCodigo }}</span></td>
                 <td>{{ sheet.placa || '-' }}</td>

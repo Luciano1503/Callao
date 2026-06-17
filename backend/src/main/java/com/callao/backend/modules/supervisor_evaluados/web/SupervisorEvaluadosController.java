@@ -69,6 +69,14 @@ public class SupervisorEvaluadosController {
 		return ResponseEntity.ok(ApiResponse.ok("Color del grupo actualizado correctamente.", supervisorEvaluadosService.updateGroupColor(groupId, request)));
 	}
 
+	@PostMapping("/grupos/{groupId}/fecha")
+	public ResponseEntity<ApiResponse<EvaluatedGroupResponse>> updateGroupDate(
+		@PathVariable Long groupId,
+		@Valid @RequestBody com.callao.backend.modules.supervisor_evaluados.dto.UpdateGroupDateRequest request
+	) {
+		return ResponseEntity.ok(ApiResponse.ok("Fecha de registro del grupo actualizada correctamente.", supervisorEvaluadosService.updateGroupDate(groupId, request)));
+	}
+
 	@PostMapping("/grupos/{groupId}/finalizar")
 	public ResponseEntity<ApiResponse<EvaluatedGroupResponse>> finalizeGroup(
 		@PathVariable Long groupId,

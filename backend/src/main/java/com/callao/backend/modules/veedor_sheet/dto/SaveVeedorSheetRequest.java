@@ -14,6 +14,8 @@ public record SaveVeedorSheetRequest(
 
 	String observaciones,
 
+	Boolean finalizado,
+
 	@Valid
 	List<SaveVeedorSheetRowRequest> evaluados
 ) {

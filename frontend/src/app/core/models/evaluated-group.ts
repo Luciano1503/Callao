@@ -8,6 +8,7 @@ export interface EvaluatedPerson {
   categoriaId: number;
   categoriaCodigo: string;
   categoriaNombre: string;
+  esVip: boolean;
   resultadoFinal: string;
   creadoEn: string;
 }
@@ -45,6 +46,7 @@ export interface CreateEvaluatedRequest {
   nombres: string;
   categoriaId: number;
   placa: string;
+  esVip: boolean;
 }
 
 export interface CreateGroupRequest {
@@ -60,4 +62,9 @@ export interface FinalizeGroupRequest {
 export interface UpdateGroupColorRequest {
   supervisorId: number;
   colorId: number;
+}
+
+export interface UpdateGroupDateRequest {
+  supervisorId: number;
+  registradoEn: string;
 }

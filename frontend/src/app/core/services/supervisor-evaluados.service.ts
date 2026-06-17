@@ -58,4 +58,10 @@ export class SupervisorEvaluadosService {
       .post<EvaluatedGroup, FinalizeGroupRequest>(`/supervisor-evaluados/grupos/${groupId}/finalizar`, request)
       .pipe(map((response) => response.data));
   }
+
+  updateGroupDate(groupId: number, request: import('../models/evaluated-group').UpdateGroupDateRequest): Observable<EvaluatedGroup> {
+    return this.api
+      .post<EvaluatedGroup, import('../models/evaluated-group').UpdateGroupDateRequest>(`/supervisor-evaluados/grupos/${groupId}/fecha`, request)
+      .pipe(map((response) => response.data));
+  }
 }

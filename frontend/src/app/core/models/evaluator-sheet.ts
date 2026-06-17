@@ -12,6 +12,7 @@ export interface EvaluatorSheetSummary {
   numeroGrupo: number;
   dni: string;
   nombres: string;
+  esVip: boolean;
   categoriaId: number;
   categoriaCodigo: string;
   categoriaNombre: string;
