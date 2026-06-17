@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/v1/(.*)",
-      "destination": "https://<TU-BACKEND-RAILWAY-URL>/api/v1/$1"
+      "destination": "https://believable-forgiveness-production-c96b.up.railway.app/api/v1/$1"
     },
     {
       "source": "/(.*)",
