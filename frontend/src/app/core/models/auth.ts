@@ -19,4 +19,5 @@ export interface LoginResponse {
   rolCodigo: string;
   rolNombre: string;
   debeCambiarPassword: boolean;
+  token: string;
 }

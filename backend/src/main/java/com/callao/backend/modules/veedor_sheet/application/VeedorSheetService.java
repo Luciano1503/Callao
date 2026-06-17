@@ -58,6 +58,14 @@ public class VeedorSheetService {
 		if (FINALIZED_STATUS.equals(group.estado())) {
 			throw new BusinessException("La evaluacion ya fue finalizada por el administrador.");
 		}
+
+		org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+		Long loggedInUserId = (Long) auth.getPrincipal();
+		boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+		if (!isAdmin && !loggedInUserId.equals(request.veedorId())) {
+			throw new com.callao.backend.shared.error.BusinessException("No tienes permisos para realizar esta acción en nombre de otro usuario.");
+		}
 		
 		
 

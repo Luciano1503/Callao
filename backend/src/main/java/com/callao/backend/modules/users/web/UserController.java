@@ -19,11 +19,13 @@ import com.callao.backend.modules.users.dto.UserResponse;
 import com.callao.backend.shared.api.ApiResponse;
 
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class UserController {
 
 	private final UserService userService;

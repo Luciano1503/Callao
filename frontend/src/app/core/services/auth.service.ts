@@ -28,7 +28,7 @@ export class AuthService {
     return this.api.post<LoginResponse, LoginRequest>('/auth/login', request).pipe(
       tap((response) => {
         this.user.set(response.data);
-        localStorage.setItem(SESSION_KEY, JSON.stringify(response.data));
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(response.data));
       }),
       map((response) => response.data)
     );
@@ -42,8 +42,8 @@ export class AuthService {
 
   logout(): void {
     this.user.set(null);
-    localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem('callao.activeProfile');
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem('callao.activeProfile');
   }
 
   canAccessProfile(profile: unknown, roleCode: string): boolean {
@@ -115,7 +115,7 @@ export class AuthService {
   }
 
   private loadSession(): LoginResponse | null {
-    const rawSession = localStorage.getItem(SESSION_KEY);
+    const rawSession = sessionStorage.getItem(SESSION_KEY);
     if (!rawSession) {
       return null;
     }
@@ -123,7 +123,7 @@ export class AuthService {
     try {
       return JSON.parse(rawSession) as LoginResponse;
     } catch {
-      localStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(SESSION_KEY);
       return null;
     }
   }

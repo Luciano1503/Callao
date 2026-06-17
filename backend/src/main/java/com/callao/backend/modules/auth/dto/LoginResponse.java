@@ -8,6 +8,7 @@ public record LoginResponse(
 	String celular,
 	String rolCodigo,
 	String rolNombre,
-	boolean debeCambiarPassword
+	boolean debeCambiarPassword,
+	String token
 ) {
 }

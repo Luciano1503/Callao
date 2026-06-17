@@ -25,7 +25,8 @@ public record CreateUserRequest(
 	String celular,
 
 	@NotBlank(message = "La contrasena temporal es obligatoria.")
-	@Size(min = 6, max = 72, message = "La contrasena temporal debe tener entre 6 y 72 caracteres.")
+	@Size(min = 8, max = 72, message = "La contrasena temporal debe tener entre 8 y 72 caracteres.")
+	@Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$", message = "La contraseña debe tener al menos una letra mayúscula, una letra minúscula y un número.")
 	String password,
 
 	@NotBlank(message = "La confirmacion de contrasena es obligatoria.")

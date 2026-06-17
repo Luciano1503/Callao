@@ -11,6 +11,8 @@ import com.callao.backend.modules.auth.infrastructure.AuthRepository.AuthUserRow
 import com.callao.backend.modules.notification.application.EmailService;
 import com.callao.backend.modules.notification.application.EmailService.PasswordChangedEmail;
 import com.callao.backend.shared.error.BusinessException;
+import com.callao.backend.config.security.JwtTokenProvider;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +23,7 @@ public class AuthService {
 	private final AuthRepository authRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final EmailService emailService;
+	private final JwtTokenProvider tokenProvider;
 
 	public LoginResponse login(LoginRequest request) {
 		AuthUserRow user = authRepository.findActiveByIdentifier(request.usuario())
@@ -30,6 +33,12 @@ public class AuthService {
 			throw new InvalidCredentialsException();
 		}
 
+		String token = tokenProvider.generateToken(
+			new UsernamePasswordAuthenticationToken(user.id(), null),
+			user.id(),
+			user.rolCodigo()
+		);
+
 		return new LoginResponse(
 			user.id(),
 			user.dni(),
@@ -38,7 +47,8 @@ public class AuthService {
 			user.celular(),
 			user.rolCodigo(),
 			user.rolNombre(),
-			user.debeCambiarPassword()
+			user.debeCambiarPassword(),
+			token
 		);
 	}
 

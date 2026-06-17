@@ -12,7 +12,8 @@ public record ChangePasswordRequest(
 	String oldPassword,
 
 	@NotBlank(message = "La contrasena nueva es obligatoria.")
-	@Size(min = 6, max = 72, message = "La contrasena nueva debe tener entre 6 y 72 caracteres.")
+	@Size(min = 8, max = 72, message = "La contrasena nueva debe tener entre 8 y 72 caracteres.")
+	@jakarta.validation.constraints.Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$", message = "La contraseña debe tener al menos una letra mayúscula, una letra minúscula y un número.")
 	String newPassword,
 
 	@NotBlank(message = "La confirmacion de contrasena es obligatoria.")

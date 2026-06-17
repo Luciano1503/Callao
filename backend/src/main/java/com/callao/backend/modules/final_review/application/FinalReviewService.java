@@ -45,6 +45,14 @@ public class FinalReviewService {
 			throw new BusinessException("El grupo seleccionado no existe.");
 		}
 
+		org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+		Long loggedInUserId = (Long) auth.getPrincipal();
+		boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+		if (!isAdmin && !loggedInUserId.equals(request.adminId())) {
+			throw new com.callao.backend.shared.error.BusinessException("No tienes permisos para realizar esta acción en nombre de otro usuario.");
+		}
+
 		List<FinalizeEvaluationRowRequest> rows = request.resultados() == null ? List.of() : request.resultados();
 		for (FinalizeEvaluationRowRequest row : rows) {
 			String result = normalizeResult(row.resultadoFinal());
