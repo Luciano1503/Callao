@@ -24,14 +24,6 @@ public record CreateUserRequest(
 	@Pattern(regexp = "^$|\\d{9}$", message = "El celular debe tener 9 digitos.")
 	String celular,
 
-	@NotBlank(message = "La contrasena temporal es obligatoria.")
-	@Size(min = 8, max = 72, message = "La contrasena temporal debe tener entre 8 y 72 caracteres.")
-	@Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$", message = "La contraseña debe tener al menos una letra mayúscula, una letra minúscula y un número.")
-	String password,
-
-	@NotBlank(message = "La confirmacion de contrasena es obligatoria.")
-	String confirmPassword,
-
 	@NotNull(message = "El rol es obligatorio.")
 	Long rolId,
 

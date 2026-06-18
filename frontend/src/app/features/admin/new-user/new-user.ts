@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LucideBadge, LucideEye, LucideEyeOff, LucideLock, LucideSave, LucideUserRoundPlus } from '@lucide/angular';
+import { LucideBadge, LucideLock, LucideSave, LucideUserRoundPlus } from '@lucide/angular';
 
 import { RolCatalog } from '../../../core/models/catalog';
 import { UserResponse } from '../../../core/models/user';
@@ -11,7 +11,7 @@ import { UserService } from '../../../core/services/user.service';
 
 @Component({
   selector: 'app-new-user',
-  imports: [RouterLink, LucideBadge, LucideEye, LucideEyeOff, LucideLock, LucideSave, LucideUserRoundPlus],
+  imports: [RouterLink, LucideBadge, LucideLock, LucideSave, LucideUserRoundPlus],
   templateUrl: './new-user.html'
 })
 export class NewUser {
@@ -23,8 +23,6 @@ export class NewUser {
   protected readonly createdUser = signal<UserResponse | null>(null);
   protected readonly isSubmitting = signal(false);
   protected readonly errorMessage = signal('');
-  protected readonly showPassword = signal(false);
-  protected readonly showConfirmPassword = signal(false);
 
   constructor() {
     this.catalogService.getRoles().subscribe((roles) => this.roles.set(roles));
@@ -35,16 +33,9 @@ export class NewUser {
 
     const form = event.currentTarget as HTMLFormElement;
     const formData = new FormData(form);
-    const password = String(formData.get('password') ?? '');
-    const confirmPassword = String(formData.get('confirmPassword') ?? '');
 
     this.createdUser.set(null);
     this.errorMessage.set('');
-
-    if (password !== confirmPassword) {
-      this.errorMessage.set('Las contrasenas no coinciden.');
-      return;
-    }
 
     const dni = String(formData.get('dni') ?? '').trim();
     const correo = String(formData.get('correo') ?? '').trim();
@@ -71,8 +62,6 @@ export class NewUser {
       nombres: String(formData.get('nombres') ?? '').trim(),
       correo,
       celular,
-      password,
-      confirmPassword,
       rolId: Number(formData.get('rolId')),
       estado: String(formData.get('estado') ?? 'ACTIVO') as 'ACTIVO' | 'INACTIVO',
       creadoPor: this.authService.currentUser()?.usuarioId ?? null
@@ -87,14 +76,6 @@ export class NewUser {
         this.errorMessage.set(this.resolveCreateError(error));
       }
     });
-  }
-
-  protected togglePassword(): void {
-    this.showPassword.update((value) => !value);
-  }
-
-  protected toggleConfirmPassword(): void {
-    this.showConfirmPassword.update((value) => !value);
   }
 
   private resolveCreateError(error: unknown): string {

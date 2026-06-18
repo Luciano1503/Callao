@@ -2,9 +2,7 @@ export interface CreateUserRequest {
   dni: string;
   nombres: string;
   correo: string;
-  celular: string;
-  password: string;
-  confirmPassword: string;
+  celular?: string;
   rolId: number;
   estado: 'ACTIVO' | 'INACTIVO';
   creadoPor: number | null;

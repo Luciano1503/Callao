@@ -1,5 +1,6 @@
 package com.callao.backend.modules.users.application;
 
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Locale;
 
@@ -29,9 +30,6 @@ public class UserService {
 	private final EmailService emailService;
 
 	public UserResponse create(CreateUserRequest request) {
-		if (!request.password().equals(request.confirmPassword())) {
-			throw new BusinessException("Las contrasenas no coinciden.");
-		}
 
 		String estado = normalizeEstado(request.estado());
 		RoleRow role = userRepository.findRoleById(request.rolId())
@@ -49,13 +47,15 @@ public class UserService {
 			throw new BusinessException("Ya existe un usuario registrado con ese DNI o correo.");
 		}
 
+		String generatedPassword = generateSecurePassword();
+
 		UserRow created = userRepository.create(new CreateUserRow(
 			role.id(),
 			dni,
 			request.nombres().trim(),
 			correo,
 			celular,
-			passwordEncoder.encode(request.password()),
+			passwordEncoder.encode(generatedPassword),
 			estado,
 			request.creadoPor()
 		));
@@ -67,7 +67,7 @@ public class UserService {
 				created.nombres(),
 				role.nombre(),
 				created.dni(),
-				request.password()
+				generatedPassword
 			));
 		} catch (EmailDeliveryException exception) {
 			emailSent = false;
@@ -159,5 +159,37 @@ public class UserService {
 		}
 
 		return value.trim();
+	}
+
+	private String generateSecurePassword() {
+		String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		String lower = "abcdefghijklmnopqrstuvwxyz";
+		String digits = "0123456789";
+		String special = "!@#$%^&*";
+		String all = upper + lower + digits + special;
+		SecureRandom random = new SecureRandom();
+		StringBuilder sb = new StringBuilder(10);
+
+		// Garantizar al menos un caracter de cada tipo para cumplir con la RegEx
+		sb.append(upper.charAt(random.nextInt(upper.length())));
+		sb.append(lower.charAt(random.nextInt(lower.length())));
+		sb.append(digits.charAt(random.nextInt(digits.length())));
+
+		// Llenar el resto de la contraseña
+		for (int i = 3; i < 10; i++) {
+			sb.append(all.charAt(random.nextInt(all.length())));
+		}
+
+		// Mezclar los caracteres
+		String password = sb.toString();
+		char[] passArray = password.toCharArray();
+		for (int i = passArray.length - 1; i > 0; i--) {
+			int index = random.nextInt(i + 1);
+			char temp = passArray[index];
+			passArray[index] = passArray[i];
+			passArray[i] = temp;
+		}
+
+		return new String(passArray);
 	}
 }
