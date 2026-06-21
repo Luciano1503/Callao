@@ -1,13 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { LucideEye, LucideEyeOff, LucideLock, LucideLogIn, LucideShield, LucideUser } from '@lucide/angular';
 
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
-  imports: [LucideEye, LucideEyeOff, LucideLock, LucideLogIn, LucideShield, LucideUser],
   templateUrl: './login.html'
 })
 export class Login {
