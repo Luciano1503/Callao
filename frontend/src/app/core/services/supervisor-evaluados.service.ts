@@ -7,6 +7,7 @@ import {
   EvaluatedGroup,
   EvaluatedGroupSummary,
   FinalizeGroupRequest,
+  SupervisorConsulta,
   UpdateGroupColorRequest
 } from '../models/evaluated-group';
 import { ApiService } from './api.service';
@@ -20,6 +21,12 @@ export class SupervisorEvaluadosService {
   getGroups(supervisorId: number): Observable<EvaluatedGroupSummary[]> {
     return this.api
       .get<EvaluatedGroupSummary[]>(`/supervisor-evaluados/grupos?supervisorId=${supervisorId}`)
+      .pipe(map((response) => response.data));
+  }
+
+  getConsultas(supervisorId: number): Observable<SupervisorConsulta[]> {
+    return this.api
+      .get<SupervisorConsulta[]>(`/supervisor-evaluados/consultas?supervisorId=${supervisorId}`)
       .pipe(map((response) => response.data));
   }
 

@@ -7,6 +7,7 @@ import {
   LucideFileText,
   LucideLayoutDashboard,
   LucideLogOut,
+  LucideSearch,
   LucideSettings,
   LucideShield,
   LucideUsers
@@ -69,6 +70,7 @@ const PROFILES: ShellProfile[] = ['admin', 'supervisor', 'evaluador', 'veedor'];
     LucideFileText,
     LucideLayoutDashboard,
     LucideLogOut,
+    LucideSearch,
     LucideSettings,
     LucideShield,
     LucideUsers

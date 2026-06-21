@@ -9,6 +9,7 @@ import com.callao.backend.modules.catalog.dto.CategoriaCatalogResponse;
 import com.callao.backend.modules.catalog.dto.ColorCatalogResponse;
 import com.callao.backend.modules.catalog.dto.CriterioCatalogResponse;
 import com.callao.backend.modules.catalog.dto.RolCatalogResponse;
+import com.callao.backend.modules.catalog.dto.SedeCatalogResponse;
 import com.callao.backend.modules.catalog.dto.TipoCriterioCatalogResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -113,14 +114,30 @@ public class CatalogRepository {
 	public List<com.callao.backend.modules.catalog.dto.VehiculoCatalogResponse> findVehiculos() {
 		return jdbcTemplate.query(
 			"""
-			SELECT id, placa
+			SELECT id, placa, sede_id
 			FROM callao.vehiculos
 			WHERE activo = TRUE
 			ORDER BY placa
 			""",
 			(rs, rowNum) -> new com.callao.backend.modules.catalog.dto.VehiculoCatalogResponse(
 				rs.getLong("id"),
-				rs.getString("placa")
+				rs.getString("placa"),
+				rs.getLong("sede_id")
+			)
+		);
+	}
+
+	public List<SedeCatalogResponse> findSedes() {
+		return jdbcTemplate.query(
+			"""
+			SELECT id, nombre
+			FROM callao.sedes
+			WHERE activo = TRUE
+			ORDER BY id
+			""",
+			(rs, rowNum) -> new SedeCatalogResponse(
+				rs.getLong("id"),
+				rs.getString("nombre")
 			)
 		);
 	}

@@ -197,6 +197,18 @@ public class SupervisorEvaluadosService {
 			.orElseThrow(() -> new BusinessException("El grupo solicitado no existe."));
 	}
 
+	public EvaluatedGroupResponse getGroup(Long groupId, Long supervisorId) {
+		GroupRow group = repository.findGroupById(groupId)
+			.filter(g -> g.supervisorId().equals(supervisorId))
+			.orElseThrow(() -> new BusinessException("Grupo no encontrado o no autorizado"));
+
+		return buildResponse(group.id());
+	}
+
+	public List<com.callao.backend.modules.supervisor_evaluados.dto.SupervisorConsultaResponse> getConsultas(Long supervisorId) {
+		return repository.findAllEvaluatedBySupervisor(supervisorId);
+	}
+
 	private void ensureGroupBelongsToSupervisor(GroupRow group, Long supervisorId) {
 		if (!group.supervisorId().equals(supervisorId)) {
 			throw new BusinessException("El grupo no pertenece al supervisor indicado.");

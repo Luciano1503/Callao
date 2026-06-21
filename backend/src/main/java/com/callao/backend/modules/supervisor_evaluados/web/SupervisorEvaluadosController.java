@@ -40,6 +40,11 @@ public class SupervisorEvaluadosController {
 		return ResponseEntity.ok(ApiResponse.ok("Grupo actual encontrado.", supervisorEvaluadosService.getCurrentGroup(supervisorId)));
 	}
 
+	@GetMapping("/consultas")
+	public ResponseEntity<ApiResponse<List<com.callao.backend.modules.supervisor_evaluados.dto.SupervisorConsultaResponse>>> getConsultas(@RequestParam Long supervisorId) {
+		return ResponseEntity.ok(ApiResponse.ok("Consultas encontradas.", supervisorEvaluadosService.getConsultas(supervisorId)));
+	}
+
 	@GetMapping("/grupos/{groupId}")
 	public ResponseEntity<ApiResponse<EvaluatedGroupResponse>> findGroup(
 		@PathVariable Long groupId,

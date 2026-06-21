@@ -3,7 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { LucideCalendar, LucideCheckCircle2, LucideClock, LucidePlus, LucideSave, LucideUserRoundPlus } from '@lucide/angular';
 import { forkJoin } from 'rxjs';
 
-import { CategoriaCatalog, ColorCatalog, VehiculoCatalog } from '../../../core/models/catalog';
+import { CategoriaCatalog, ColorCatalog, SedeCatalog, VehiculoCatalog } from '../../../core/models/catalog';
 import { EvaluatedGroup, EvaluatedGroupSummary } from '../../../core/models/evaluated-group';
 import { AuthService } from '../../../core/services/auth.service';
 import { CatalogService } from '../../../core/services/catalog.service';
@@ -21,8 +21,10 @@ export class EvaluatedRelation {
 
   protected readonly categories = signal<CategoriaCatalog[]>([]);
   protected readonly colors = signal<ColorCatalog[]>([]);
+  protected readonly sedes = signal<SedeCatalog[]>([]);
   protected readonly vehicles = signal<VehiculoCatalog[]>([]);
   protected readonly groups = signal<EvaluatedGroupSummary[]>([]);
+  protected readonly selectedSedeId = signal<number | null>(null);
   protected readonly activeGroup = signal<EvaluatedGroup | null>(null);
   protected readonly observations = signal('');
   protected readonly isLoading = signal(true);
@@ -49,7 +51,13 @@ export class EvaluatedRelation {
 
   protected readonly filteredVehicles = computed(() => {
     const term = this.placaSearchTerm().trim().toLowerCase();
-    const list = this.vehicles();
+    const sedeId = this.selectedSedeId();
+    let list = this.vehicles();
+
+    if (sedeId) {
+      list = list.filter(v => v.sedeId === sedeId);
+    }
+
     if (!term) {
       return list.slice(0, 5);
     }
@@ -70,12 +78,14 @@ export class EvaluatedRelation {
     forkJoin({
       categories: this.catalogService.getCategorias(),
       colors: this.catalogService.getColores(),
+      sedes: this.catalogService.getSedes(),
       vehicles: this.catalogService.getVehiculos(),
       group: this.supervisorService.getCurrentGroup(this.supervisorId())
     }).subscribe({
-      next: ({ categories, colors, vehicles, group }) => {
+      next: ({ categories, colors, sedes, vehicles, group }) => {
         this.categories.set(categories);
         this.colors.set(colors);
+        this.sedes.set(sedes);
         this.vehicles.set(vehicles);
         this.setActiveGroup(group);
         this.loadGroups();
@@ -128,6 +138,7 @@ export class EvaluatedRelation {
         this.loadGroups();
         this.successMessage.set('Evaluado registrado correctamente.');
         this.placaSearchTerm.set('');
+        this.selectedSedeId.set(null);
         form.reset();
       },
       error: (error: unknown) => {
@@ -235,9 +246,20 @@ export class EvaluatedRelation {
     });
   }
 
+  protected onSedeChange(event: Event): void {
+    const val = (event.target as HTMLSelectElement).value;
+    this.selectedSedeId.set(val ? Number(val) : null);
+  }
+
   protected onPlacaInput(event: Event): void {
-    this.placaSearchTerm.set((event.target as HTMLInputElement).value);
+    const placa = (event.target as HTMLInputElement).value;
+    this.placaSearchTerm.set(placa);
     this.showPlacaDropdown.set(true);
+
+    const vehicle = this.vehicles().find(v => v.placa.toLowerCase() === placa.trim().toLowerCase());
+    if (vehicle) {
+      this.selectedSedeId.set(vehicle.sedeId);
+    }
   }
 
   protected onPlacaBlur(): void {
@@ -250,6 +272,11 @@ export class EvaluatedRelation {
   protected selectPlaca(placa: string): void {
     this.placaSearchTerm.set(placa);
     this.showPlacaDropdown.set(false);
+
+    const vehicle = this.vehicles().find(v => v.placa === placa);
+    if (vehicle) {
+      this.selectedSedeId.set(vehicle.sedeId);
+    }
   }
 
   protected finalizeGroup(): void {

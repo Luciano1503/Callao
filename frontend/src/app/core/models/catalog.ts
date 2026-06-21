@@ -16,9 +16,15 @@ export interface ColorCatalog {
   codigoHex: string;
 }
 
+export interface SedeCatalog {
+  id: number;
+  nombre: string;
+}
+
 export interface VehiculoCatalog {
   id: number;
   placa: string;
+  sedeId: number;
 }
 
 export interface CriterioCatalog {

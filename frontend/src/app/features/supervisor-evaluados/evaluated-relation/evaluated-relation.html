@@ -91,6 +91,15 @@
               }
             </select>
           </label>
+          <label class="field-group">
+            <span class="field-label">Sede</span>
+            <select class="select" [value]="selectedSedeId() ?? ''" (change)="onSedeChange($event)">
+              <option value="">Todas las sedes</option>
+              @for (sede of sedes(); track sede.id) {
+                <option [value]="sede.id">{{ sede.nombre }}</option>
+              }
+            </select>
+          </label>
           <label class="field-group" style="position: relative;">
             <span class="field-label">Placa <span class="required">*</span></span>
             <input class="field" 
@@ -100,10 +109,11 @@
                    (input)="onPlacaInput($event)"
                    (focus)="showPlacaDropdown.set(true)"
                    (blur)="onPlacaBlur()"
-                   placeholder="Buscar o escribir placa"
+                   [disabled]="!selectedSedeId()"
+                   [placeholder]="selectedSedeId() ? 'Buscar o escribir placa' : 'Seleccione una sede primero'"
                    required />
             
-            @if (showPlacaDropdown()) {
+            @if (showPlacaDropdown() && selectedSedeId()) {
               <ul class="autocomplete-dropdown">
                 @for (vehicle of filteredVehicles(); track vehicle.id) {
                   <li (mousedown)="selectPlaca(vehicle.placa)">{{ vehicle.placa }}</li>

@@ -132,6 +132,48 @@ public class SupervisorEvaluadosRepository {
 		);
 	}
 
+	public List<com.callao.backend.modules.supervisor_evaluados.dto.SupervisorConsultaResponse> findAllEvaluatedBySupervisor(Long supervisorId) {
+		return jdbcTemplate.query(
+			"""
+			SELECT e.id,
+			       e.grupo_id,
+			       g.numero_grupo,
+			       cg.nombre AS color_nombre,
+			       e.dni,
+			       e.nombres,
+			       e.placa,
+			       c.codigo AS categoria_codigo,
+			       g.estado AS estado_grupo,
+			       e.resultado_final,
+			       e.es_vip,
+			       g.registrado_en,
+			       e.creado_en
+			FROM callao.evaluados_grupo e
+			INNER JOIN callao.grupos_evaluacion g ON g.id = e.grupo_id
+			LEFT JOIN callao.colores_grupo cg ON cg.id = g.color_id
+			INNER JOIN callao.categorias c ON c.id = e.categoria_id
+			WHERE g.supervisor_id = ?
+			ORDER BY e.creado_en DESC
+			""",
+			(rs, rowNum) -> new com.callao.backend.modules.supervisor_evaluados.dto.SupervisorConsultaResponse(
+				rs.getLong("id"),
+				rs.getLong("grupo_id"),
+				rs.getInt("numero_grupo"),
+				rs.getString("color_nombre"),
+				rs.getString("dni"),
+				rs.getString("nombres"),
+				rs.getString("placa"),
+				rs.getString("categoria_codigo"),
+				rs.getString("estado_grupo"),
+				rs.getString("resultado_final"),
+				rs.getBoolean("es_vip"),
+				toLocalDateTime(rs.getTimestamp("registrado_en")),
+				toLocalDateTime(rs.getTimestamp("creado_en"))
+			),
+			supervisorId
+		);
+	}
+
 	public GroupRow createGroup(Integer groupNumber, Long colorId, Long supervisorId) {
 		Long groupId = jdbcTemplate.queryForObject(
 			"""

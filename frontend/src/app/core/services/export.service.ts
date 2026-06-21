@@ -23,6 +23,11 @@ export class ExportService {
     doc.rect(10, 10, 190, 40); 
     doc.text('RELACIÓN DE EVALUADOS', 105, 18, { align: 'center' });
 
+    doc.setFontSize(14);
+    doc.setTextColor(200, 0, 0);
+    doc.text(`Nº ${String(detail.grupo.numeroGrupo).padStart(6, '0')}`, 175, 18, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+
     doc.setFontSize(12);
     doc.text('GRUPO', 20, 30);
     doc.rect(40, 20, 25, 20); 

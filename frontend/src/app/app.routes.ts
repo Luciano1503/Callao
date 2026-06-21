@@ -5,6 +5,7 @@ import { MainLayout } from './layout/main-layout/main-layout';
 import { Dashboard } from './features/admin/dashboard/dashboard';
 import { EditUser } from './features/admin/edit-user/edit-user';
 import { EvaluatedRelation } from './features/supervisor-evaluados/evaluated-relation/evaluated-relation';
+import { SupervisorConsultas } from './features/supervisor-evaluados/supervisor-consultas/supervisor-consultas';
 import { EvaluatorVip } from './features/evaluador-circuito/evaluator-vip/evaluator-vip';
 import { EvaluationSheets } from './features/evaluador-circuito/evaluation-sheets/evaluation-sheets';
 import { FinalReview } from './features/admin/final-review/final-review';
@@ -71,6 +72,13 @@ export const routes: Routes = [
         path: 'relacion-evaluados',
         component: EvaluatedRelation,
         title: 'Relacion de evaluados',
+        canActivate: [authGuard],
+        data: { profile: 'supervisor' }
+      },
+      {
+        path: 'supervisor-consultas',
+        component: SupervisorConsultas,
+        title: 'Consultas de Supervisor',
         canActivate: [authGuard],
         data: { profile: 'supervisor' }
       },

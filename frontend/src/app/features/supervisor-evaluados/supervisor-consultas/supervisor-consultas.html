@@ -1,0 +1,153 @@
+<section>
+  <header class="page-header" style="display: flex; align-items: flex-start; gap: 1rem;">
+    <div style="background-color: #f0f4f8; padding: 0.75rem; border-radius: 0.5rem; color: #0076ff;">
+      <svg lucideSearch class="icon-lg"></svg>
+    </div>
+    <div>
+      <p class="eyebrow">Supervisor de evaluados</p>
+      <h1 class="page-title" style="margin-bottom: 0.25rem;">Consultas y Registro</h1>
+      <p class="page-copy" style="margin-top: 0;">Busqueda global en el historial de evaluados registrados. Utilice los filtros para encontrar registros especificos.</p>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="form-error relation-message">{{ errorMessage() }}</div>
+  }
+
+  @if (isLoading()) {
+    <section class="panel-card loading-card">Cargando datos...</section>
+  } @else {
+    <section class="panel-card relation-list-card">
+      <div class="filter-bar">
+        <label class="filter-field">
+          <span class="filter-label">DNI</span>
+          <input
+            type="text"
+            class="field"
+            placeholder="Buscar DNI"
+            [value]="filterDni()"
+            (input)="updateFilter('filterDni', $any($event.target).value)"
+            (keyup.enter)="applyFilters()"
+          />
+        </label>
+        <label class="filter-field">
+          <span class="filter-label">Nombres</span>
+          <input
+            type="text"
+            class="field"
+            placeholder="Buscar nombre"
+            [value]="filterName()"
+            (input)="updateFilter('filterName', $any($event.target).value)"
+            (keyup.enter)="applyFilters()"
+          />
+        </label>
+        <label class="filter-field">
+          <span class="filter-label">Placa</span>
+          <input
+            type="text"
+            class="field"
+            placeholder="Buscar placa"
+            [value]="filterPlaca()"
+            (input)="updateFilter('filterPlaca', $any($event.target).value)"
+            (keyup.enter)="applyFilters()"
+          />
+        </label>
+        <label class="filter-field">
+          <span class="filter-label">Grupo</span>
+          <input
+            type="number"
+            class="field"
+            placeholder="N° Grupo"
+            [value]="filterGrupo()"
+            (input)="updateFilter('filterGrupo', $any($event.target).value)"
+            (keyup.enter)="applyFilters()"
+          />
+        </label>
+        <label class="filter-field">
+          <span class="filter-label">Fecha Reg. Grupo</span>
+          <input
+            type="date"
+            class="field"
+            [value]="filterDateGroup()"
+            (change)="updateFilter('filterDateGroup', $any($event.target).value)"
+          />
+        </label>
+        <label class="filter-field">
+          <span class="filter-label">Fecha Evaluado</span>
+          <input
+            type="date"
+            class="field"
+            [value]="filterDateUser()"
+            (change)="updateFilter('filterDateUser', $any($event.target).value)"
+          />
+        </label>
+        <label class="filter-field">
+          <span class="filter-label">Estado</span>
+          <select
+            class="select"
+            [value]="filterState()"
+            (change)="updateFilter('filterState', $any($event.target).value)"
+          >
+            <option value="">Todos</option>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="APROBADO">Aprobado</option>
+            <option value="DESAPROBADO">Desaprobado</option>
+          </select>
+        </label>
+        <div class="filter-actions">
+          <button class="btn btn-secondary" type="button" (click)="clearFilters()">
+            <span>Limpiar</span>
+          </button>
+          <button class="btn btn-primary" type="button" (click)="applyFilters()">
+            <svg lucideListFilter class="icon"></svg>
+            <span>Filtrar</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table" style="width: 100%; table-layout: auto;">
+          <thead style="text-align: left;">
+            <tr>
+              <th style="padding: 12px 10px;">Grupo</th>
+              <th style="padding: 12px 10px;">DNI</th>
+              <th style="padding: 12px 10px;">Nombres y Apellidos</th>
+              <th style="padding: 12px 10px;">Categoria</th>
+              <th style="padding: 12px 10px;">Placa</th>
+              <th style="padding: 12px 10px;">Fecha Reg. Grupo</th>
+              <th style="padding: 12px 10px;">Fecha Evaluado</th>
+              <th style="padding: 12px 10px;">Estado Grupo</th>
+              <th style="padding: 12px 10px;">Resultado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (person of filteredConsultas(); track person.id) {
+              <tr>
+                <td style="padding: 12px 10px;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="color-dot" [title]="person.colorNombre" style="background-color: #ccc;"></span>
+                    <span>Grupo {{ person.numeroGrupo }}</span>
+                  </div>
+                </td>
+                <td style="padding: 12px 10px;">{{ person.dni }}</td>
+                <td style="padding: 12px 10px;"><strong>{{ person.nombres }}</strong></td>
+                <td style="padding: 12px 10px;">{{ person.categoriaCodigo }}</td>
+                <td style="padding: 12px 10px;">{{ person.placa || '-' }}</td>
+                <td style="padding: 12px 10px;">{{ formatDateTime(person.registradoEn) }}</td>
+                <td style="padding: 12px 10px;">{{ formatDateTime(person.creadoEn) }}</td>
+                <td style="padding: 12px 10px;">{{ formatStatus(person.estadoGrupo) }}</td>
+                <td style="padding: 12px 10px;"><span class="badge warning">{{ formatStatus(person.resultadoFinal) }}</span></td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" style="text-align: center; padding: 3rem 1rem; color: var(--text-2); font-weight: 500;">
+                  Utilice los filtros de arriba para buscar evaluados.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</section>

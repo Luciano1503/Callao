@@ -40,6 +40,22 @@ export interface EvaluatedGroupSummary {
   registradoEn: string;
 }
 
+export interface SupervisorConsulta {
+  id: number;
+  grupoId: number;
+  numeroGrupo: number;
+  colorNombre: string;
+  dni: string;
+  nombres: string;
+  placa: string | null;
+  categoriaCodigo: string;
+  estadoGrupo: string;
+  resultadoFinal: string;
+  esVip: boolean;
+  registradoEn: string;
+  creadoEn: string;
+}
+
 export interface CreateEvaluatedRequest {
   supervisorId: number;
   dni: string;

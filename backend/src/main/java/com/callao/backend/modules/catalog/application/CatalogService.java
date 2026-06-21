@@ -46,6 +46,10 @@ public class CatalogService {
 		return catalogRepository.findVehiculos();
 	}
 
+	public List<com.callao.backend.modules.catalog.dto.SedeCatalogResponse> getSedes() {
+		return catalogRepository.findSedes();
+	}
+
 	public List<TipoCriterioCatalogResponse> getTiposCriterio() {
 		return catalogRepository.findTiposCriterio();
 	}
