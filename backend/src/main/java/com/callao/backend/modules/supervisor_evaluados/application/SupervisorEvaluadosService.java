@@ -16,6 +16,7 @@ import com.callao.backend.modules.supervisor_evaluados.infrastructure.Supervisor
 import com.callao.backend.modules.supervisor_evaluados.infrastructure.SupervisorEvaluadosRepository.CreateEvaluatedRow;
 import com.callao.backend.modules.supervisor_evaluados.infrastructure.SupervisorEvaluadosRepository.GroupRow;
 import com.callao.backend.shared.error.BusinessException;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +28,7 @@ public class SupervisorEvaluadosService {
 	private static final String DRAFT_STATUS = "BORRADOR";
 
 	private final SupervisorEvaluadosRepository repository;
+	private final SimpMessagingTemplate messagingTemplate;
 
 	@Transactional
 	public EvaluatedGroupResponse getCurrentGroup(Long supervisorId) {
@@ -124,17 +126,25 @@ public class SupervisorEvaluadosService {
 			throw new BusinessException("La categoria seleccionada no existe o esta inactiva.");
 		}
 
+		String placaClean = cleanUpper(request.placa());
+		if (placaClean != null && !placaClean.isBlank()) {
+			if (repository.existsEvaluatedPlacaInGroup(groupId, placaClean)) {
+				throw new BusinessException("Esta placa ya fue registrada en el grupo actual.");
+			}
+		}
+
 		repository.createEvaluated(new CreateEvaluatedRow(
 			groupId,
 			currentTotal + 1,
 			dni,
 			clean(request.nombres()),
-			cleanUpper(request.placa()),
-			request.categoriaId(),
-			request.esVip()
+			placaClean,
+			request.categoriaId()
 		));
 
-		return buildResponse(groupId);
+		EvaluatedGroupResponse response = buildResponse(groupId);
+		messagingTemplate.convertAndSend("/topic/veedores", response);
+		return response;
 	}
 
 	@Transactional

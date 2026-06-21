@@ -3,7 +3,7 @@
     <div>
       <p class="eyebrow">Veedor</p>
       <h1 class="page-title">Ficha de Evaluacion: {{ position.label }}</h1>
-      <p class="page-copy">Registro de habilidad y reglamento. El resultado final solo lo modifica el administrador.</p>
+      <p class="page-copy">Registro de habilidad y reglamento.</p>
     </div>
     <div class="header-actions">
       <button class="btn btn-secondary" type="button" (click)="printSheet()">
@@ -36,7 +36,7 @@
         <p>Gerencia Regional de Transportes y Comunicaciones</p>
         <span>Unidad de Licencias - Examen de Manejo</span>
       </div>
-      <strong>Ficha N {{ currentSheet.fichaId ?? currentSheet.grupoId }}</strong>
+      <strong>Ficha Nº {{ String(currentSheet.grupoId).padStart(6, '0') }}</strong>
     </header>
 
     <section class="sheet-meta">
@@ -164,9 +164,9 @@
         @if (currentSheet.estadoGrupo === 'BORRADOR') {
           El supervisor todavia no finaliza este grupo. No puedes calificar aun.
         } @else if (currentSheet.estadoGrupo === 'FINALIZADO') {
-          El administrador ha finalizado esta evaluacion. Esta ficha es de solo lectura.
+          La evaluación ha finalizado. Esta ficha es de solo lectura.
         } @else {
-          Si el administrador finaliza la evaluacion, esta ficha quedara en solo lectura.
+          Al finalizar la evaluación, esta ficha quedara en solo lectura.
         }
       </p>
       <button class="btn btn-primary" type="button" [disabled]="isSaving() || isReadOnly() || rows().length === 0" (click)="saveSheet()">

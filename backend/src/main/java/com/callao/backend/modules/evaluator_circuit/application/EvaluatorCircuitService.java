@@ -13,9 +13,11 @@ import com.callao.backend.modules.evaluator_circuit.dto.EvaluatorSheetDetailResp
 import com.callao.backend.modules.evaluator_circuit.dto.EvaluatorSheetSummaryResponse;
 import com.callao.backend.modules.evaluator_circuit.dto.UpdateEvaluatorReviewRequest;
 import com.callao.backend.modules.evaluator_circuit.dto.UpdateEvaluatorSheetRequest;
+import com.callao.backend.modules.evaluator_circuit.dto.ToggleVipRequest;
 import com.callao.backend.modules.evaluator_circuit.infrastructure.EvaluatorCircuitRepository;
 import com.callao.backend.modules.evaluator_circuit.infrastructure.EvaluatorCircuitRepository.TipoVeedorRow;
 import com.callao.backend.shared.error.BusinessException;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,6 +28,7 @@ public class EvaluatorCircuitService {
 	private static final String FINALIZED_STATUS = "FINALIZADO";
 
 	private final EvaluatorCircuitRepository repository;
+	private final SimpMessagingTemplate messagingTemplate;
 
 	public List<EvaluatorSheetSummaryResponse> findSheets() {
 		return repository.findSheets();
@@ -63,6 +66,22 @@ public class EvaluatorCircuitService {
 		repository.recalculateResultadosFinales(sheet.evaluadoId());
 
 		return findDetail(sheet.evaluadoId());
+	}
+
+	@Transactional
+	public EvaluatorSheetDetailResponse toggleVip(Long evaluatedId, ToggleVipRequest request) {
+		if (request.evaluadorId() == null || request.evaluadorId() <= 0) {
+			throw new BusinessException("El evaluador es obligatorio.");
+		}
+
+		EvaluatorSheetSummaryResponse sheet = findSheetOrThrow(evaluatedId);
+		ensureEditable(sheet);
+
+		repository.updateVipStatus(evaluatedId, request.esVip());
+
+		EvaluatorSheetDetailResponse detail = findDetail(evaluatedId);
+		messagingTemplate.convertAndSend("/topic/veedores", detail);
+		return detail;
 	}
 
 	private void updateReview(EvaluatorSheetSummaryResponse sheet, UpdateEvaluatorReviewRequest request) {

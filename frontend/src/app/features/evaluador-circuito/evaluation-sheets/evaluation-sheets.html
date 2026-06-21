@@ -1,9 +1,9 @@
 <section>
   <header class="page-header">
     <div>
-      <p class="eyebrow">Evaluador de centro de circuito</p>
-      <h1 class="page-title">Fichas de Evaluacion</h1>
-      <p class="page-copy">Consulta y edicion de fichas mientras la evaluacion no haya sido finalizada por el administrador.</p>
+      <p class="eyebrow">Administrador</p>
+      <h1 class="page-title">Calificación de Circuito</h1>
+      <p class="page-copy">Revisa y consolida los resultados de los veedores, y registra las observaciones del circuito.</p>
     </div>
   </header>
 
@@ -46,7 +46,7 @@
           }
         </select>
       </label>
-      <button class="btn btn-secondary" type="button">
+      <button class="btn btn-secondary" type="button" (click)="applyFilters()">
         <svg lucideListFilter class="icon"></svg>
         <span>Filtrar</span>
       </button>
@@ -104,7 +104,13 @@
               </tr>
             } @empty {
               <tr>
-                <td class="empty-cell" colspan="9">No se encontraron fichas con los filtros aplicados.</td>
+                <td class="empty-cell" colspan="9">
+                  @if (!appliedFilters().dni && !appliedFilters().name && !appliedFilters().group && !appliedFilters().category) {
+                    Utilice los filtros de arriba para buscar evaluados.
+                  } @else {
+                    No se encontraron fichas con los filtros aplicados.
+                  }
+                </td>
               </tr>
             }
           }

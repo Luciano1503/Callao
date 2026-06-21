@@ -350,6 +350,14 @@ public class EvaluatorCircuitRepository {
 		);
 	}
 
+	public void updateVipStatus(Long evaluadoId, boolean isVip) {
+		jdbcTemplate.update(
+			"UPDATE callao.evaluados_grupo SET es_vip = ?, actualizado_en = CURRENT_TIMESTAMP WHERE id = ?",
+			isVip,
+			evaluadoId
+		);
+	}
+
 	private EvaluatorSheetSummaryResponse mapSummary(java.sql.ResultSet rs) throws java.sql.SQLException {
 		return new EvaluatorSheetSummaryResponse(
 			rs.getLong("evaluado_id"),

@@ -1,0 +1,87 @@
+<section>
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Evaluador de Circuito</p>
+      <h1 class="page-title">Relación de Evaluados</h1>
+      <p class="page-copy">Seleccione a los evaluados que tendrán el estado VIP.</p>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="form-error relation-message">{{ errorMessage() }}</div>
+  }
+
+  @if (successMessage()) {
+    <div class="form-success relation-message">{{ successMessage() }}</div>
+  }
+
+  @if (isLoading()) {
+    <section class="panel-card loading-card">Cargando grupos...</section>
+  } @else {
+    <div class="panel-card group-controls" style="margin-bottom: 2rem;">
+      <label class="field-group">
+        <span class="field-label">Grupo</span>
+        <select class="select" (change)="selectGroup($event)">
+          @for (group of groupedSheets(); track group.grupoId) {
+            <option [value]="group.grupoId" [selected]="group.grupoId === selectedGroupId()">
+              Grupo {{ group.numeroGrupo }} ({{ group.sheets.length }}/10)
+            </option>
+          } @empty {
+            <option value="" disabled>No hay grupos disponibles</option>
+          }
+        </select>
+      </label>
+      <aside class="progress-card" style="margin-left: auto;">
+        <strong>Estado del Grupo</strong>
+        <span class="badge" [class.success]="currentGroup()?.estadoGrupo === 'FINALIZADO'" [class.warning]="currentGroup()?.estadoGrupo !== 'FINALIZADO'">
+          {{ currentGroup()?.estadoGrupo === 'FINALIZADO' ? 'Finalizado' : 'En Proceso' }}
+        </span>
+      </aside>
+    </div>
+
+    @if (currentGroup(); as group) {
+      <section class="panel-card compact-table-card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>N</th>
+                <th>DNI</th>
+                <th>Nombres y Apellidos</th>
+                <th>Categoría</th>
+                <th>Placa</th>
+                <th style="text-align: center;">Es VIP</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (sheet of group.sheets; track sheet.evaluadoId) {
+                <tr>
+                  <td [style.background-color]="sheet.esVip ? '#b3e5fc' : 'transparent'">{{ sheet.evaluadoId }}</td>
+                  <td>{{ sheet.dni }}</td>
+                  <td><strong>{{ sheet.nombres }}</strong></td>
+                  <td><span class="badge">{{ sheet.categoriaCodigo }}</span></td>
+                  <td>{{ sheet.placa || '-' }}</td>
+                  <td style="text-align: center;">
+                    <label class="checkbox-container" style="display: inline-block; margin: 0;">
+                      <input 
+                        type="checkbox" 
+                        [checked]="sheet.esVip" 
+                        [disabled]="group.estadoGrupo === 'FINALIZADO'"
+                        (change)="toggleVip(sheet, $event)"
+                      />
+                      <span class="checkmark"></span>
+                    </label>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="empty-cell">No hay evaluados en este grupo.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  }
+</section>

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.callao.backend.modules.evaluator_circuit.application.EvaluatorCircuitService;
 import com.callao.backend.modules.evaluator_circuit.dto.EvaluatorSheetDetailResponse;
 import com.callao.backend.modules.evaluator_circuit.dto.EvaluatorSheetSummaryResponse;
+import com.callao.backend.modules.evaluator_circuit.dto.ToggleVipRequest;
 import com.callao.backend.modules.evaluator_circuit.dto.UpdateEvaluatorSheetRequest;
 import com.callao.backend.shared.api.ApiResponse;
 
@@ -42,5 +43,13 @@ public class EvaluatorCircuitController {
 		@Valid @RequestBody UpdateEvaluatorSheetRequest request
 	) {
 		return ResponseEntity.ok(ApiResponse.ok("Ficha de evaluacion actualizada correctamente.", service.update(evaluatedId, request)));
+	}
+
+	@PostMapping("/fichas/{evaluatedId}/vip")
+	public ResponseEntity<ApiResponse<EvaluatorSheetDetailResponse>> toggleVip(
+		@PathVariable Long evaluatedId,
+		@Valid @RequestBody ToggleVipRequest request
+	) {
+		return ResponseEntity.ok(ApiResponse.ok("Estado VIP actualizado correctamente.", service.toggleVip(evaluatedId, request)));
 	}
 }

@@ -45,12 +45,15 @@ export class EvaluationSheets {
   protected readonly filterName = signal('');
   protected readonly filterGroup = signal('');
   protected readonly filterCategory = signal('');
+  protected readonly appliedFilters = signal({ dni: '', name: '', group: '', category: '' });
 
   protected readonly filteredSheets = computed(() => {
-    const dni = this.filterDni().trim().toLowerCase();
-    const name = this.filterName().trim().toLowerCase();
-    const group = this.filterGroup();
-    const category = this.filterCategory();
+    const { dni, name, group, category } = this.appliedFilters();
+
+    // Si no hay ningun filtro aplicado, retornamos vacio para no mostrar la sabana de datos
+    if (!dni && !name && !group && !category) {
+      return [];
+    }
 
     return this.sheets().filter((sheet) => {
       const matchesDni = !dni || sheet.dni.toLowerCase().includes(dni);
@@ -108,6 +111,15 @@ export class EvaluationSheets {
     } else {
       this.filterCategory.set(value);
     }
+  }
+
+  protected applyFilters(): void {
+    this.appliedFilters.set({
+      dni: this.filterDni().trim().toLowerCase(),
+      name: this.filterName().trim().toLowerCase(),
+      group: this.filterGroup(),
+      category: this.filterCategory()
+    });
   }
 
   protected clearMessages(): void {

@@ -5,6 +5,7 @@ import { MainLayout } from './layout/main-layout/main-layout';
 import { Dashboard } from './features/admin/dashboard/dashboard';
 import { EditUser } from './features/admin/edit-user/edit-user';
 import { EvaluatedRelation } from './features/supervisor-evaluados/evaluated-relation/evaluated-relation';
+import { EvaluatorVip } from './features/evaluador-circuito/evaluator-vip/evaluator-vip';
 import { EvaluationSheets } from './features/evaluador-circuito/evaluation-sheets/evaluation-sheets';
 import { FinalReview } from './features/admin/final-review/final-review';
 import { Login } from './features/auth/login/login';
@@ -74,8 +75,15 @@ export const routes: Routes = [
         data: { profile: 'supervisor' }
       },
       {
-        path: 'fichas-evaluacion',
+        path: 'evaluacion-circuito',
         component: EvaluationSheets,
+        title: 'Calificación de Circuito',
+        canActivate: [authGuard],
+        data: { profile: 'admin' }
+      },
+      {
+        path: 'fichas-evaluacion',
+        component: EvaluatorVip,
         title: 'Fichas de evaluacion',
         canActivate: [authGuard],
         data: { profile: 'evaluador' }

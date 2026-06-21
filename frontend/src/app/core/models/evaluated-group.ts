@@ -46,7 +46,6 @@ export interface CreateEvaluatedRequest {
   nombres: string;
   categoriaId: number;
   placa: string;
-  esVip: boolean;
 }
 
 export interface CreateGroupRequest {

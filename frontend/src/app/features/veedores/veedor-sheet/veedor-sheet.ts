@@ -1,7 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { LucideCalendar, LucideClock, LucideSave, LucidePrinter } from '@lucide/angular';
+import { Subscription } from 'rxjs';
 
 import { CriterioCatalog } from '../../../core/models/catalog';
 import { EvaluatedGroupSummary } from '../../../core/models/evaluated-group';
@@ -10,6 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { ExportService } from '../../../core/services/export.service';
 import { VeedorSheetService } from '../../../core/services/veedor-sheet.service';
+import { WebsocketService } from '../../../core/services/websocket.service';
 
 interface VeedorType {
   route: string;
@@ -42,11 +44,13 @@ const VEEDORES: VeedorType[] = [
   imports: [LucideCalendar, LucideClock, LucideSave, LucidePrinter],
   templateUrl: './veedor-sheet.html'
 })
-export class VeedorSheet {
+export class VeedorSheet implements OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly catalogService = inject(CatalogService);
   private readonly veedorSheetService = inject(VeedorSheetService);
   private readonly exportService = inject(ExportService);
+  private readonly websocketService = inject(WebsocketService);
+  private wsSubscription: Subscription | null = null;
 
   protected position: VeedorType = VEEDORES[0];
   protected readonly skillOptions = signal<CriterioCatalog[]>([]);
@@ -60,6 +64,7 @@ export class VeedorSheet {
   protected readonly isSaving = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
+  protected readonly String = String;
   protected readonly isReadOnly = computed(() => {
     const sheet = this.sheet();
     if (!sheet) return true;
@@ -74,6 +79,20 @@ export class VeedorSheet {
       this.loadSheet(this.position.route);
     });
     this.loadGroups();
+
+    this.websocketService.connect();
+    this.wsSubscription = this.websocketService.onVeedoresUpdate().subscribe((data: any) => {
+      const sheet = this.sheet();
+      const groupId = data.grupo?.id || data.id;
+      if (sheet && sheet.grupoId === groupId) {
+        this.loadSheet(this.position.route);
+      }
+      this.loadGroups(); // Also reload groups for side menu summary
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.wsSubscription?.unsubscribe();
   }
 
   private loadCriteria(route: string): void {

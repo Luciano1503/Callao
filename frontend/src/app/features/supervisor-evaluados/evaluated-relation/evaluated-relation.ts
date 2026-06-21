@@ -106,7 +106,6 @@ export class EvaluatedRelation {
     const formData = new FormData(form);
     const categoryId = Number(formData.get('categoriaId'));
     const dni = String(formData.get('dni') ?? '').trim();
-    const esVip = formData.get('esVip') === 'on';
 
     if (!/^\d{8}$/.test(dni)) {
       this.errorMessage.set('El DNI debe tener 8 digitos.');
@@ -121,8 +120,7 @@ export class EvaluatedRelation {
       dni,
       nombres: String(formData.get('nombres') ?? '').trim(),
       categoriaId: categoryId,
-      placa: String(formData.get('placa') ?? '').trim(),
-      esVip
+      placa: String(formData.get('placa') ?? '').trim()
     }).subscribe({
       next: (updatedGroup) => {
         this.isSubmitting.set(false);
@@ -327,15 +325,9 @@ export class EvaluatedRelation {
       return '';
     }
 
-    const date = new Date(value);
     // datetime-local format is YYYY-MM-DDThh:mm
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    // Backend sends ISO string like "2023-10-15T14:30:00" without Z
+    return value.substring(0, 16);
   }
 
   protected formatStatus(value: string): string {

@@ -20,8 +20,6 @@ public record CreateEvaluatedRequest(
 	@NotNull(message = "La categoria es obligatoria.")
 	Long categoriaId,
 
-	boolean esVip,
-
 	@Size(max = 20, message = "La placa no debe superar 20 caracteres.")
 	String placa
 ) {

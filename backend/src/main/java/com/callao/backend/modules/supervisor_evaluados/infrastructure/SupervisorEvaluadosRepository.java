@@ -160,15 +160,14 @@ public class SupervisorEvaluadosRepository {
 				categoria_id,
 				es_vip
 			)
-			VALUES (?, ?, ?, ?, ?, ?, ?)
+			VALUES (?, ?, ?, ?, ?, ?, false)
 			""",
 			row.grupoId(),
 			row.numeroFila(),
 			row.dni(),
 			row.nombres(),
 			row.placa(),
-			row.categoriaId(),
-			row.esVip()
+			row.categoriaId()
 		);
 	}
 
@@ -239,6 +238,22 @@ public class SupervisorEvaluadosRepository {
 			Integer.class,
 			groupId,
 			dni
+		);
+
+		return count != null && count > 0;
+	}
+
+	public boolean existsEvaluatedPlacaInGroup(Long groupId, String placa) {
+		Integer count = jdbcTemplate.queryForObject(
+			"""
+			SELECT COUNT(1)
+			FROM callao.evaluados_grupo
+			WHERE grupo_id = ?
+			  AND placa = ?
+			""",
+			Integer.class,
+			groupId,
+			placa
 		);
 
 		return count != null && count > 0;
@@ -321,8 +336,7 @@ public class SupervisorEvaluadosRepository {
 		String dni,
 		String nombres,
 		String placa,
-		Long categoriaId,
-		boolean esVip
+		Long categoriaId
 	) {
 	}
 

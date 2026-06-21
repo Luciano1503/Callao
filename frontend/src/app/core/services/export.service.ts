@@ -178,7 +178,7 @@ export class ExportService {
 
       doc.setFontSize(16);
       doc.setTextColor(200, 0, 0);
-      doc.text('Nº', 130, 42);
+      doc.text(`Nº ${String(detail.grupo.numeroGrupo).padStart(6, '0')}`, 130, 42);
       doc.setTextColor(0, 0, 0);
       
       doc.setFontSize(10);
@@ -359,7 +359,7 @@ export class ExportService {
 
     doc.setFontSize(16);
     doc.setTextColor(200, 0, 0);
-    doc.text('Nº', 130, 42);
+    doc.text(`Nº ${String(sheet.numeroGrupo).padStart(6, '0')}`, 130, 42);
     doc.setTextColor(0, 0, 0);
     
     doc.setFontSize(10);

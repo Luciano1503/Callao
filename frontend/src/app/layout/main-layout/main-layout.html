@@ -21,6 +21,10 @@
             <svg lucideUsers class="icon"></svg>
             <span>Usuarios</span>
           </a>
+          <a class="nav-link" routerLink="/evaluacion-circuito" routerLinkActive="active">
+            <svg lucideClipboardList class="icon"></svg>
+            <span>Calificación Circuito</span>
+          </a>
           <a class="nav-link" routerLink="/revision-final" routerLinkActive="active">
             <svg lucideBadgeCheck class="icon"></svg>
             <span>Revision Final</span>
@@ -30,7 +34,11 @@
         @case ('supervisor') {
           <a class="nav-link" routerLink="/relacion-evaluados" routerLinkActive="active">
             <svg lucideClipboardList class="icon"></svg>
-            <span>Relacion de Evaluados</span>
+            <span>Registro</span>
+          </a>
+          <a class="nav-link" routerLink="/supervisor-consultas" routerLinkActive="active" style="opacity: 0.5; pointer-events: none;" title="Pronto">
+            <svg lucideSearch class="icon"></svg>
+            <span>Consultas</span>
           </a>
         }
 
@@ -63,7 +71,7 @@
   </aside>
 
   <header class="topbar">
-    <strong class="topbar-title">SISTEMA DE CONTROL DE ACCESO</strong>
+    <strong class="topbar-title">CONTROL DE CIRCUITO DE MANEJO</strong>
 
     <div class="topbar-actions">
       <a class="user-chip" routerLink="/perfil">

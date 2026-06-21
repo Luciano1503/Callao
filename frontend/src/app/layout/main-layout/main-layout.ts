@@ -26,7 +26,7 @@ interface ShellProfileInfo {
 
 const PROFILE_INFO: Record<ShellProfile, ShellProfileInfo> = {
   admin: {
-    brand: 'Control de Acceso',
+    brand: 'Control de Circuito de Manejo',
     subtitle: 'Administracion del sistema',
     userName: 'Admin Principal',
     userMeta: 'DG-01',
@@ -139,12 +139,16 @@ export class MainLayout {
   }
 
   private inferProfileFromUrl(url: string): ShellProfile {
-    if (url.startsWith('/relacion-evaluados')) {
+    if (url.startsWith('/relacion-evaluados') || url.startsWith('/supervisor-consultas')) {
       return 'supervisor';
     }
 
     if (url.startsWith('/fichas-evaluacion')) {
       return 'evaluador';
+    }
+
+    if (url.startsWith('/evaluacion-circuito') || url.startsWith('/revision-final') || url.startsWith('/dashboard') || url.startsWith('/usuarios')) {
+      return 'admin';
     }
 
     if (url.startsWith('/veedores')) {

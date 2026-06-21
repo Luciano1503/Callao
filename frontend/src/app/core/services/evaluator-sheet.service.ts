@@ -27,4 +27,10 @@ export class EvaluatorSheetService {
       .post<EvaluatorSheetDetail, UpdateEvaluatorSheetRequest>(`/evaluador-circuito/fichas/${evaluatedId}`, request)
       .pipe(map((response) => response.data));
   }
+
+  toggleVip(evaluatedId: number, evaluadorId: number, esVip: boolean): Observable<EvaluatorSheetDetail> {
+    return this.api
+      .post<EvaluatorSheetDetail, { evaluadorId: number; esVip: boolean }>(`/evaluador-circuito/fichas/${evaluatedId}/vip`, { evaluadorId, esVip })
+      .pipe(map((response) => response.data));
+  }
 }
