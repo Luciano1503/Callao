@@ -9,6 +9,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { EvaluatorSheetService } from '../../../core/services/evaluator-sheet.service';
 import { ScannerService } from '../../../core/services/scanner.service';
+import { TimeService } from '../../../core/services/time.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 type DetailMode = 'view' | 'edit';
@@ -30,6 +31,7 @@ export class EvaluationSheets {
   private readonly authService = inject(AuthService);
   private readonly catalogService = inject(CatalogService);
   private readonly evaluatorService = inject(EvaluatorSheetService);
+  private readonly timeService = inject(TimeService);
   private readonly scannerService = inject(ScannerService);
 
   protected readonly categories = signal<CategoriaCatalog[]>([]);
@@ -48,10 +50,24 @@ export class EvaluationSheets {
   protected readonly filterName = signal('');
   protected readonly filterGroup = signal('');
   protected readonly filterCategory = signal('');
-  protected readonly appliedFilters = signal({ dni: '', name: '', group: '', category: '' });
+  
+  private getLocalToday(): string {
+    return this.timeService.getLocalToday();
+  }
+
+  private toLocalDateString(value: string): string {
+    const d = new Date(value);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  
+  protected readonly filterDate = signal(this.getLocalToday());
+  protected readonly appliedFilters = signal({ dni: '', name: '', group: '', category: '', date: this.getLocalToday() });
 
   protected readonly filteredSheets = computed(() => {
-    const { dni, name, group, category } = this.appliedFilters();
+    const { dni, name, group, category, date } = this.appliedFilters();
 
     // Si no hay ningun filtro aplicado, retornamos vacio para no mostrar la sabana de datos
     if (!dni && !name && !group && !category) {
@@ -63,8 +79,9 @@ export class EvaluationSheets {
       const matchesName = !name || sheet.nombres.toLowerCase().includes(name);
       const matchesGroup = !group || String(sheet.numeroGrupo) === group;
       const matchesCategory = !category || String(sheet.categoriaId) === category;
+      const matchesDate = !date || this.toLocalDateString(sheet.registradoEn) === date;
 
-      return matchesDni && matchesName && matchesGroup && matchesCategory;
+      return matchesDni && matchesName && matchesGroup && matchesCategory && matchesDate;
     });
   });
 
@@ -107,26 +124,40 @@ export class EvaluationSheets {
     });
   }
 
-  protected updateFilter(field: 'dni' | 'name' | 'group' | 'category', event: Event): void {
+  protected updateFilter(field: 'dni' | 'name' | 'group' | 'category' | 'date', event: Event): void {
     const value = (event.target as HTMLInputElement | HTMLSelectElement).value;
-
-    if (field === 'dni') {
-      this.filterDni.set(value);
-    } else if (field === 'name') {
-      this.filterName.set(value);
-    } else if (field === 'group') {
-      this.filterGroup.set(value);
-    } else {
-      this.filterCategory.set(value);
-    }
+    if (field === 'dni') this.filterDni.set(value);
+    if (field === 'name') this.filterName.set(value);
+    if (field === 'group') this.filterGroup.set(value);
+    if (field === 'category') this.filterCategory.set(value);
+    if (field === 'date') this.filterDate.set(value);
   }
 
   protected applyFilters(): void {
+    this.errorMessage.set('');
+
+    const groupStr = this.filterGroup().trim();
+    const dateStr = this.filterDate();
+
+    if (groupStr && !dateStr) {
+      const datesForGroup = new Set(
+        this.sheets()
+          .filter(s => String(s.numeroGrupo) === groupStr)
+          .map(s => this.toLocalDateString(s.registradoEn))
+      );
+
+      if (datesForGroup.size > 1) {
+        this.errorMessage.set(`Hay más de un grupo llamado "Grupo ${groupStr}", filtre también por día.`);
+        return;
+      }
+    }
+
     this.appliedFilters.set({
       dni: this.filterDni().trim().toLowerCase(),
       name: this.filterName().trim().toLowerCase(),
-      group: this.filterGroup(),
-      category: this.filterCategory()
+      group: groupStr,
+      category: this.filterCategory().trim(),
+      date: dateStr
     });
   }
 

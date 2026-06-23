@@ -46,6 +46,10 @@
           }
         </select>
       </label>
+      <label class="field-group">
+        <span class="field-label">Fecha</span>
+        <input class="field" type="date" [value]="filterDate()" (change)="updateFilter('date', $event)" />
+      </label>
       <button class="btn btn-secondary" type="button" (click)="applyFilters()">
         <svg lucideListFilter class="icon"></svg>
         <span>Filtrar</span>

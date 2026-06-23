@@ -20,14 +20,19 @@
   } @else {
     <div class="panel-card group-controls" style="margin-bottom: 2rem;">
       <label class="field-group">
+        <span class="field-label">Fecha de grupo</span>
+        <input class="field" type="date" [value]="filterDate()" (input)="updateFilterDate($event)" />
+      </label>
+      <label class="field-group">
         <span class="field-label">Grupo</span>
         <select class="select" (change)="selectGroup($event)">
-          @for (group of groupedSheets(); track group.grupoId) {
+          <option value="">Seleccione un grupo...</option>
+          @for (group of filteredGroups(); track group.grupoId) {
             <option [value]="group.grupoId" [selected]="group.grupoId === selectedGroupId()">
               Grupo {{ group.numeroGrupo }} ({{ group.sheets.length }}/10)
             </option>
           } @empty {
-            <option value="" disabled>No hay grupos disponibles</option>
+            <option value="" disabled>No hay grupos para esta fecha</option>
           }
         </select>
       </label>

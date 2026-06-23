@@ -18,6 +18,22 @@
     <strong>{{ position.label }}</strong>
   </div>
 
+  <section class="panel-card filters veedor-filters" style="margin-bottom: 24px;">
+    <label class="field-group">
+      <span class="field-label">Fecha del Grupo</span>
+      <input class="field" type="date" [value]="filterDate()" (input)="updateFilterDate($event)" [disabled]="isChangingGroup()" />
+    </label>
+    <label class="field-group">
+      <span class="field-label">Grupo a evaluar</span>
+      <select class="select" (change)="selectGroup($event)" [disabled]="isChangingGroup()">
+        <option value="">Seleccione un grupo...</option>
+        @for (summary of filteredGroups(); track summary.id) {
+          <option [value]="summary.id" [selected]="sheet()?.grupoId === summary.id">Grupo {{ summary.numeroGrupo }} ({{ summary.totalEvaluados }}/10)</option>
+        }
+      </select>
+    </label>
+  </section>
+
   @if (errorMessage()) {
     <div class="form-error relation-message">{{ errorMessage() }}</div>
   }
@@ -43,18 +59,6 @@
       <div>
         <span>Posicion</span>
         <strong>{{ position.label }}</strong>
-      </div>
-      <div>
-        <span>Grupo</span>
-        <strong>
-          <select class="meta-select" (change)="selectGroup($event)" [disabled]="isChangingGroup()">
-            @for (summary of groups(); track summary.id) {
-              <option [value]="summary.id" [selected]="summary.id === currentSheet.grupoId">Grupo {{ summary.numeroGrupo }} ({{ summary.totalEvaluados }}/10)</option>
-            } @empty {
-              <option [value]="currentSheet.grupoId" selected>Grupo {{ currentSheet.numeroGrupo }}</option>
-            }
-          </select>
-        </strong>
       </div>
       <div>
         <span>Color</span>

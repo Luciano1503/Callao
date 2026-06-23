@@ -12,6 +12,7 @@ import { CatalogService } from '../../../core/services/catalog.service';
 import { ExportService } from '../../../core/services/export.service';
 import { VeedorSheetService } from '../../../core/services/veedor-sheet.service';
 import { WebsocketService } from '../../../core/services/websocket.service';
+import { TimeService } from '../../../core/services/time.service';
 
 interface VeedorType {
   route: string;
@@ -46,17 +47,43 @@ const VEEDORES: VeedorType[] = [
 })
 export class VeedorSheet implements OnDestroy {
   private readonly authService = inject(AuthService);
+  private readonly timeService = inject(TimeService);
   private readonly catalogService = inject(CatalogService);
   private readonly veedorSheetService = inject(VeedorSheetService);
   private readonly exportService = inject(ExportService);
   private readonly websocketService = inject(WebsocketService);
   private wsSubscription: Subscription | null = null;
+  private wsConnectionSubscription: Subscription | null = null;
 
   protected position: VeedorType = VEEDORES[0];
   protected readonly skillOptions = signal<CriterioCatalog[]>([]);
   protected readonly regulationOptions = signal<CriterioCatalog[]>([]);
   protected readonly sheet = signal<VeedorSheetModel | null>(null);
   protected readonly groups = signal<EvaluatedGroupSummary[]>([]);
+  
+  private getLocalToday(): string {
+    return this.timeService.getLocalToday();
+  }
+
+  private toLocalDateString(value: string): string {
+    const d = new Date(value);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  protected readonly filterDate = signal(this.getLocalToday());
+
+  protected updateFilterDate(event: Event): void {
+    this.filterDate.set((event.target as HTMLInputElement).value);
+  }
+
+  protected readonly filteredGroups = computed(() => {
+    const date = this.filterDate();
+    return this.groups().filter(g => !date || this.toLocalDateString(g.registradoEn) === date);
+  });
+  
   protected readonly rows = signal<VeedorRow[]>([]);
   protected readonly observations = signal('');
   protected readonly isLoading = signal(true);
@@ -76,7 +103,8 @@ export class VeedorSheet implements OnDestroy {
       const type = params.get('tipo') ?? 'torre-posterior';
       this.position = VEEDORES.find((item) => item.route === type) ?? VEEDORES[0];
       this.loadCriteria(this.position.route);
-      this.loadSheet(this.position.route);
+      this.sheet.set(null);
+      this.isLoading.set(false);
     });
     this.loadGroups();
 
@@ -85,14 +113,29 @@ export class VeedorSheet implements OnDestroy {
       const sheet = this.sheet();
       const groupId = data.grupo?.id || data.id;
       if (sheet && sheet.grupoId === groupId) {
-        this.loadSheet(this.position.route);
+        this.veedorSheetService.getSheet(this.position.route, sheet.grupoId).subscribe({
+          next: (s) => this.applySheet(s)
+        });
       }
       this.loadGroups(); // Also reload groups for side menu summary
+    });
+
+    this.wsConnectionSubscription = this.websocketService.onConnectionChange().subscribe((connected) => {
+      if (connected) {
+        this.loadGroups();
+        const sheet = this.sheet();
+        if (sheet) {
+          this.veedorSheetService.getSheet(this.position.route, sheet.grupoId).subscribe({
+            next: (s) => this.applySheet(s)
+          });
+        }
+      }
     });
   }
 
   ngOnDestroy(): void {
     this.wsSubscription?.unsubscribe();
+    this.wsConnectionSubscription?.unsubscribe();
   }
 
   private loadCriteria(route: string): void {
@@ -207,6 +250,7 @@ export class VeedorSheet implements OnDestroy {
   protected selectGroup(event: Event): void {
     const groupId = Number((event.target as HTMLSelectElement).value);
     if (!groupId) {
+      this.sheet.set(null);
       return;
     }
 
@@ -263,21 +307,7 @@ export class VeedorSheet implements OnDestroy {
     return value;
   }
 
-  private loadSheet(route: string): void {
-    this.isLoading.set(true);
-    this.clearMessages();
 
-    this.veedorSheetService.getCurrentSheet(route).subscribe({
-      next: (sheet) => {
-        this.applySheet(sheet);
-        this.isLoading.set(false);
-      },
-      error: (error: unknown) => {
-        this.isLoading.set(false);
-        this.errorMessage.set(this.resolveError(error));
-      }
-    });
-  }
 
   private loadGroups(): void {
     this.veedorSheetService.getGroups().subscribe({

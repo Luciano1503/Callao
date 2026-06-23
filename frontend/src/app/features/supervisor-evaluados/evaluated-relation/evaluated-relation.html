@@ -55,11 +55,11 @@
         <div class="panel-card group-controls">
           <label class="field-group">
             <span class="field-label">Grupo</span>
-            <select class="select" (change)="selectGroup($event)" [disabled]="isChangingGroup()">
+            <select class="select" (change)="selectGroup($event)" [disabled]="isChangingGroup()" [value]="group.id">
               @for (summary of groups(); track summary.id) {
-                <option [value]="summary.id" [selected]="summary.id === group.id">Grupo {{ summary.numeroGrupo }} ({{ summary.totalEvaluados }}/10)</option>
+                <option [value]="summary.id">{{ 'Grupo ' + summary.numeroGrupo + ' (' + summary.totalEvaluados + '/10)' }}</option>
               } @empty {
-                <option [value]="group.id" selected>Grupo {{ group.numeroGrupo }}</option>
+                <option [value]="group.id">Grupo {{ group.numeroGrupo }}</option>
               }
             </select>
         </label>
@@ -221,5 +221,13 @@
       </aside>
     </section>
     </div>
+  } @else {
+    <section class="panel-card empty-state" style="text-align: center; padding: 60px 20px; background: #f8fbff; border: 1px dashed #dce8fa;">
+      <svg lucideCalendar class="icon" style="color: #c0cde3; margin-bottom: 16px; width: 48px; height: 48px;"></svg>
+      <h3 style="margin: 0 0 8px 0; font-size: 18px; color: var(--text-1);">No hay grupos activos</h3>
+      <p style="margin: 0; color: var(--text-2); max-width: 400px; margin-inline: auto;">
+        Aún no ha creado ningún grupo el día de hoy. Presione el botón <strong>Nuevo grupo</strong> en la parte superior para empezar.
+      </p>
+    </section>
   }
 </section>

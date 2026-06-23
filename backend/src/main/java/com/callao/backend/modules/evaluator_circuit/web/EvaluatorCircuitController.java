@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.callao.backend.modules.evaluator_circuit.application.EvaluatorCircuitService;
 import com.callao.backend.modules.evaluator_circuit.dto.EvaluatorSheetDetailResponse;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/evaluador-circuito")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('EVALUADOR') or hasRole('ADMIN')")
 public class EvaluatorCircuitController {
 
 	private final EvaluatorCircuitService service;

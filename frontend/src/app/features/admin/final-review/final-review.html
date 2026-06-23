@@ -18,20 +18,20 @@
   <section class="panel-card filters review-filters">
     <label class="field-group">
       <span class="field-label">Grupo</span>
-      <select class="select" [value]="groupFilter()" (change)="updateGroupFilter($event)">
+      <select class="select" [value]="filterGroup()" (change)="updateFilterGroup($event)">
         <option value="">Todos los grupos</option>
-        @for (group of groups(); track group.id) {
-          <option [value]="group.id">Grupo {{ group.numeroGrupo }}</option>
+        @for (group of groupOptions(); track group) {
+          <option [value]="group">Grupo {{ group }}</option>
         }
       </select>
     </label>
     <label class="field-group">
       <span class="field-label">Fecha</span>
-      <input class="field" type="date" [value]="dateFilter()" (input)="updateDateFilter($event)" />
+      <input class="field" type="date" [value]="filterDate()" (input)="updateFilterDate($event)" />
     </label>
     <label class="field-group">
       <span class="field-label">Color</span>
-      <select class="select" [value]="colorFilter()" (change)="updateColorFilter($event)">
+      <select class="select" [value]="filterColor()" (change)="updateFilterColor($event)">
         <option value="">Todos los colores</option>
         @for (color of colors(); track color.id) {
           <option [value]="color.id">{{ color.nombre }}</option>
@@ -40,14 +40,14 @@
     </label>
     <label class="field-group">
       <span class="field-label">Estado</span>
-      <select class="select" [value]="statusFilter()" (change)="updateStatusFilter($event)">
+      <select class="select" [value]="filterStatus()" (change)="updateFilterStatus($event)">
         <option value="">Todos</option>
         <option value="PENDIENTE">Pendiente</option>
         <option value="EN_REVISION">En revision</option>
         <option value="FINALIZADO">Finalizado</option>
       </select>
     </label>
-    <button class="btn btn-secondary" type="button" (click)="loadGroupsOnly()">
+    <button class="btn btn-secondary" type="button" (click)="applyFilters()">
       <svg lucideListFilter class="icon"></svg>
       <span>Filtrar</span>
     </button>

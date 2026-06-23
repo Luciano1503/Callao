@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.callao.backend.modules.veedor_sheet.application.VeedorSheetService;
 import com.callao.backend.modules.veedor_sheet.dto.VeedorGroupSummaryResponse;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/veedores")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('VEEDOR') or hasRole('ADMIN')")
 public class VeedorSheetController {
 
 	private final VeedorSheetService service;

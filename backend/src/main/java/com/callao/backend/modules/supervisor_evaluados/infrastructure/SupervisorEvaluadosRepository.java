@@ -35,7 +35,7 @@ public class SupervisorEvaluadosRepository {
 			       g.finalizado_en
 			FROM callao.grupos_evaluacion g
 			INNER JOIN callao.colores_grupo c ON c.id = g.color_id
-			WHERE g.supervisor_id = ?
+			WHERE g.supervisor_id = ? AND DATE(g.registrado_en) = CURRENT_DATE
 			ORDER BY g.numero_grupo DESC, g.id DESC
 			LIMIT 1
 			""",
@@ -77,7 +77,7 @@ public class SupervisorEvaluadosRepository {
 			FROM callao.grupos_evaluacion g
 			INNER JOIN callao.colores_grupo c ON c.id = g.color_id
 			LEFT JOIN callao.evaluados_grupo e ON e.grupo_id = g.id
-			WHERE g.supervisor_id = ?
+			WHERE g.supervisor_id = ? AND DATE(g.registrado_en) = CURRENT_DATE
 			GROUP BY g.id, g.numero_grupo, c.nombre, c.codigo_hex, g.estado, g.registrado_en
 			ORDER BY g.numero_grupo DESC, g.id DESC
 			""",
@@ -174,7 +174,7 @@ public class SupervisorEvaluadosRepository {
 
 	public int getMaxGroupNumber() {
 		Integer max = jdbcTemplate.queryForObject(
-			"SELECT MAX(numero_grupo) FROM callao.grupos_evaluacion",
+			"SELECT MAX(numero_grupo) FROM callao.grupos_evaluacion WHERE DATE(registrado_en) = CURRENT_DATE",
 			Integer.class
 		);
 		return max == null ? 0 : max;

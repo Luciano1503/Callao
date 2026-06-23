@@ -190,6 +190,18 @@ export class EvaluatedRelation {
         this.isCreatingGroup.set(false);
         this.showNewGroupForm.set(false);
         this.newGroupColorId.set(null);
+        
+        // Optimistic update of the groups list so the dropdown has the option immediately
+        this.groups.update(list => [{
+          id: group.id,
+          numeroGrupo: group.numeroGrupo,
+          colorNombre: group.colorNombre,
+          colorHex: group.colorHex,
+          estado: group.estado,
+          totalEvaluados: group.totalEvaluados,
+          registradoEn: group.registradoEn
+        }, ...list]);
+        
         this.setActiveGroup(group);
         this.loadGroups();
         this.successMessage.set(`Grupo ${group.numeroGrupo} creado correctamente.`);
@@ -415,9 +427,13 @@ export class EvaluatedRelation {
     });
   }
 
-  private setActiveGroup(group: EvaluatedGroup): void {
+  private setActiveGroup(group: EvaluatedGroup | null): void {
     this.activeGroup.set(group);
-    this.observations.set(group.observaciones ?? '');
+    if (group) {
+      this.observations.set(group.observaciones ?? '');
+    } else {
+      this.observations.set('');
+    }
   }
 
   private supervisorId(): number {

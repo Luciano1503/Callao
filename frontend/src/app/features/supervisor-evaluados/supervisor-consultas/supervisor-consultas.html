@@ -81,16 +81,6 @@
             />
           </label>
           <label style="display: flex; flex-direction: column; gap: 8px;">
-            <span style="font-size: 13px; font-weight: 700; color: var(--primary-strong);">Fecha Evaluado</span>
-            <input
-              type="date"
-              class="field"
-              [value]="filterDateUser()"
-              (change)="updateFilter('filterDateUser', $any($event.target).value)"
-              style="height: 44px; border-radius: 6px;"
-            />
-          </label>
-          <label style="display: flex; flex-direction: column; gap: 8px;">
             <span style="font-size: 13px; font-weight: 700; color: var(--primary-strong);">Estado</span>
             <select
               class="select"
@@ -126,7 +116,6 @@
               <th style="padding: 12px 10px;">Categoria</th>
               <th style="padding: 12px 10px;">Placa</th>
               <th style="padding: 12px 10px;">Fecha Reg. Grupo</th>
-              <th style="padding: 12px 10px;">Fecha Evaluado</th>
               <th style="padding: 12px 10px;">Estado Grupo</th>
               <th style="padding: 12px 10px;">Resultado</th>
             </tr>
@@ -145,13 +134,12 @@
                 <td style="padding: 12px 10px;">{{ person.categoriaCodigo }}</td>
                 <td style="padding: 12px 10px;">{{ person.placa || '-' }}</td>
                 <td style="padding: 12px 10px;">{{ formatDateTime(person.registradoEn) }}</td>
-                <td style="padding: 12px 10px;">{{ formatDateTime(person.creadoEn) }}</td>
                 <td style="padding: 12px 10px;">{{ formatStatus(person.estadoGrupo) }}</td>
                 <td style="padding: 12px 10px;"><span class="badge warning">{{ formatStatus(person.resultadoFinal) }}</span></td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="9" style="text-align: center; padding: 3rem 1rem; color: var(--text-2); font-weight: 500;">
+                <td colspan="8" style="text-align: center; padding: 3rem 1rem; color: var(--text-2); font-weight: 500;">
                   Utilice los filtros de arriba para buscar evaluados.
                 </td>
               </tr>

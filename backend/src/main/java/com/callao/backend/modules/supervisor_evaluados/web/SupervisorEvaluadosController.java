@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.callao.backend.modules.supervisor_evaluados.application.SupervisorEvaluadosService;
 import com.callao.backend.modules.supervisor_evaluados.dto.CreateEvaluatedRequest;
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/supervisor-evaluados")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('SUPERVISOR') or hasRole('ADMIN')")
 public class SupervisorEvaluadosController {
 
 	private final SupervisorEvaluadosService supervisorEvaluadosService;

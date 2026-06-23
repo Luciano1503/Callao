@@ -4,12 +4,14 @@ import { Subscription } from 'rxjs';
 import { EvaluatorSheetSummary } from '../../../core/models/evaluator-sheet';
 import { AuthService } from '../../../core/services/auth.service';
 import { EvaluatorSheetService } from '../../../core/services/evaluator-sheet.service';
+import { TimeService } from '../../../core/services/time.service';
 import { WebsocketService } from '../../../core/services/websocket.service';
 
 interface GroupedSheets {
   grupoId: number;
   numeroGrupo: number;
   estadoGrupo: string;
+  registradoEn: string;
   sheets: EvaluatorSheetSummary[];
 }
 
@@ -21,6 +23,7 @@ interface GroupedSheets {
 export class EvaluatorVip implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly evaluatorSheetService = inject(EvaluatorSheetService);
+  private readonly timeService = inject(TimeService);
   private readonly websocketService = inject(WebsocketService);
 
   private wsSubscription: Subscription | null = null;
@@ -30,6 +33,30 @@ export class EvaluatorVip implements OnInit, OnDestroy {
   protected readonly isLoading = signal(true);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
+
+  private getLocalToday(): string {
+    return this.timeService.getLocalToday();
+  }
+
+  private toLocalDateString(value: string): string {
+    const d = new Date(value);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  protected readonly filterDate = signal(this.getLocalToday());
+
+  protected updateFilterDate(event: Event): void {
+    this.filterDate.set((event.target as HTMLInputElement).value);
+    this.selectedGroupId.set(null);
+  }
+
+  protected readonly filteredGroups = computed(() => {
+    const date = this.filterDate();
+    return this.groupedSheets().filter(g => !date || this.toLocalDateString(g.registradoEn) === date);
+  });
 
   protected readonly currentGroup = computed(() => {
     const groupId = this.selectedGroupId();
@@ -62,6 +89,7 @@ export class EvaluatorVip implements OnInit, OnDestroy {
               grupoId: sheet.grupoId,
               numeroGrupo: sheet.numeroGrupo,
               estadoGrupo: sheet.estadoGrupo,
+              registradoEn: sheet.registradoEn,
               sheets: []
             });
           }
@@ -71,9 +99,7 @@ export class EvaluatorVip implements OnInit, OnDestroy {
         const groupsArray = Array.from(groupsMap.values()).sort((a, b) => b.numeroGrupo - a.numeroGrupo);
         this.groupedSheets.set(groupsArray);
 
-        if (!this.selectedGroupId() && groupsArray.length > 0) {
-          this.selectedGroupId.set(groupsArray[0].grupoId);
-        }
+
 
         this.isLoading.set(false);
       },
@@ -89,6 +115,8 @@ export class EvaluatorVip implements OnInit, OnDestroy {
     if (groupId) {
       this.selectedGroupId.set(groupId);
       this.clearMessages();
+    } else {
+      this.selectedGroupId.set(null);
     }
   }
 

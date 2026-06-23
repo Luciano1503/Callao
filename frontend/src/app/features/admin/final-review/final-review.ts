@@ -16,6 +16,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { ExportService } from '../../../core/services/export.service';
 import { FinalReviewService } from '../../../core/services/final-review.service';
+import { TimeService } from '../../../core/services/time.service';
 
 const VEEDOR_CODES = [
   'TORRE_POSTERIOR',
@@ -33,6 +34,7 @@ export class FinalReview {
   private readonly authService = inject(AuthService);
   private readonly catalogService = inject(CatalogService);
   private readonly finalReviewService = inject(FinalReviewService);
+  private readonly timeService = inject(TimeService);
   private readonly exportService = inject(ExportService);
 
   protected readonly colors = signal<ColorCatalog[]>([]);
@@ -42,22 +44,32 @@ export class FinalReview {
   protected readonly veedorCodes = VEEDOR_CODES;
   protected readonly isLoading = signal(true);
   protected readonly isSaving = signal(false);
-  protected readonly groupFilter = signal('');
-  protected readonly dateFilter = signal('');
-  protected readonly colorFilter = signal('');
-  protected readonly statusFilter = signal('');
+  protected readonly filterGroup = signal('');
+  
+  private getLocalToday(): string {
+    return this.timeService.getLocalToday();
+  }
+  
+  protected readonly filterDate = signal(this.getLocalToday());
+  protected readonly filterColor = signal('');
+  protected readonly filterStatus = signal('');
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
+  
+  protected readonly appliedFilters = signal({ group: '', date: this.getLocalToday(), color: '', status: '' });
+
+  protected readonly groupOptions = computed(() => {
+    const numbers = new Set(this.groups().map((g) => g.numeroGrupo));
+    return [...numbers].sort((a, b) => a - b);
+  });
+
   protected readonly filteredGroups = computed(() => {
-    const group = this.groupFilter();
-    const date = this.dateFilter();
-    const color = this.colorFilter();
-    const status = this.statusFilter();
+    const { group, date, color, status } = this.appliedFilters();
 
     return this.groups().filter((item) => {
-      const matchesGroup = !group || item.id === Number(group);
+      const matchesGroup = !group || String(item.numeroGrupo) === group;
       const matchesDate = !date || this.toInputDate(item.registradoEn) === date;
-      const matchesColor = !color || item.colorId === Number(color);
+      const matchesColor = !color || String(item.colorId) === color;
       const matchesStatus = !status || item.estado === status;
       return matchesGroup && matchesDate && matchesColor && matchesStatus;
     });
@@ -67,20 +79,47 @@ export class FinalReview {
     this.loadInitialData();
   }
 
-  protected updateGroupFilter(event: Event): void {
-    this.groupFilter.set((event.target as HTMLSelectElement).value);
+  protected updateFilterGroup(event: Event): void {
+    this.filterGroup.set((event.target as HTMLSelectElement).value);
   }
 
-  protected updateDateFilter(event: Event): void {
-    this.dateFilter.set((event.target as HTMLInputElement).value);
+  protected updateFilterDate(event: Event): void {
+    this.filterDate.set((event.target as HTMLInputElement).value);
   }
 
-  protected updateColorFilter(event: Event): void {
-    this.colorFilter.set((event.target as HTMLSelectElement).value);
+  protected updateFilterColor(event: Event): void {
+    this.filterColor.set((event.target as HTMLSelectElement).value);
   }
 
-  protected updateStatusFilter(event: Event): void {
-    this.statusFilter.set((event.target as HTMLSelectElement).value);
+  protected updateFilterStatus(event: Event): void {
+    this.filterStatus.set((event.target as HTMLSelectElement).value);
+  }
+
+  protected applyFilters(): void {
+    this.errorMessage.set('');
+    
+    const groupStr = this.filterGroup().trim();
+    const dateStr = this.filterDate();
+
+    if (groupStr && !dateStr) {
+      const datesForGroup = new Set(
+        this.groups()
+          .filter(g => String(g.numeroGrupo) === groupStr)
+          .map(g => this.toInputDate(g.registradoEn))
+      );
+
+      if (datesForGroup.size > 1) {
+        this.errorMessage.set(`Hay más de un grupo llamado "Grupo ${groupStr}", filtre también por día.`);
+        return;
+      }
+    }
+
+    this.appliedFilters.set({
+      group: groupStr,
+      date: dateStr,
+      color: this.filterColor(),
+      status: this.filterStatus()
+    });
   }
 
   protected selectGroup(group: FinalReviewGroup): void {
@@ -195,9 +234,6 @@ export class FinalReview {
         this.colors.set(colors);
         this.groups.set(groups);
         this.isLoading.set(false);
-        if (groups.length > 0) {
-          this.selectGroup(groups[0]);
-        }
       },
       error: (error: unknown) => {
         this.isLoading.set(false);
@@ -219,7 +255,11 @@ export class FinalReview {
   }
 
   private toInputDate(value: string): string {
-    return new Date(value).toISOString().slice(0, 10);
+    const d = new Date(value);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private clearMessages(): void {

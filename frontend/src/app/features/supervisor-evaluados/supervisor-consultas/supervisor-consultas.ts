@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { SupervisorEvaluadosService } from '../../../core/services/supervisor-evaluados.service';
+import { TimeService } from '../../../core/services/time.service';
 import { SupervisorConsulta } from '../../../core/models/evaluated-group';
 import { ScannerService } from '../../../core/services/scanner.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -19,6 +20,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class SupervisorConsultas {
   private readonly authService = inject(AuthService);
   private readonly supervisorService = inject(SupervisorEvaluadosService);
+  private readonly timeService = inject(TimeService);
   private readonly scannerService = inject(ScannerService);
 
   protected readonly consultas = signal<SupervisorConsulta[]>([]);
@@ -30,18 +32,31 @@ export class SupervisorConsultas {
   protected readonly filterName = signal('');
   protected readonly filterGrupo = signal('');
   protected readonly filterPlaca = signal('');
-  protected readonly filterDateGroup = signal('');
-  protected readonly filterDateUser = signal('');
-  protected readonly filterState = signal('');
+  
+  // Get today's date in local time (YYYY-MM-DD) to avoid UTC timezone offset issues
+  private getLocalToday(): string {
+    return this.timeService.getLocalToday();
+  }
 
+  private toLocalDateString(value: string): string {
+    const d = new Date(value);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  
+  protected readonly filterDateGroup = signal(this.getLocalToday());
+  
+  protected readonly filterState = signal('');
+  
   // Applied filters (used for computation)
   protected readonly appliedFilters = signal({
     dni: '',
     name: '',
     grupo: '',
     placa: '',
-    dateGroup: '',
-    dateUser: '',
+    dateGroup: this.getLocalToday(),
     state: ''
   });
 
@@ -49,7 +64,7 @@ export class SupervisorConsultas {
     const filters = this.appliedFilters();
     
     // Return empty if no filters are active
-    if (!filters.dni && !filters.name && !filters.grupo && !filters.placa && !filters.dateGroup && !filters.dateUser && !filters.state) {
+    if (!filters.dni && !filters.name && !filters.grupo && !filters.placa && !filters.dateGroup && !filters.state) {
       return [];
     }
 
@@ -62,17 +77,11 @@ export class SupervisorConsultas {
       
       let matchDateGroup = true;
       if (filters.dateGroup) {
-        const itemDateGroup = item.registradoEn.split('T')[0];
+        const itemDateGroup = this.toLocalDateString(item.registradoEn);
         matchDateGroup = itemDateGroup === filters.dateGroup;
       }
 
-      let matchDateUser = true;
-      if (filters.dateUser) {
-        const itemDateUser = item.creadoEn.split('T')[0];
-        matchDateUser = itemDateUser === filters.dateUser;
-      }
-
-      return matchDni && matchName && matchGrupo && matchPlaca && matchState && matchDateGroup && matchDateUser;
+      return matchDni && matchName && matchGrupo && matchPlaca && matchState && matchDateGroup;
     });
   });
 
@@ -85,18 +94,35 @@ export class SupervisorConsultas {
     });
   }
 
-  protected updateFilter(key: 'filterDni' | 'filterName' | 'filterGrupo' | 'filterPlaca' | 'filterDateGroup' | 'filterDateUser' | 'filterState', value: string): void {
+  protected updateFilter(key: 'filterDni' | 'filterName' | 'filterGrupo' | 'filterPlaca' | 'filterDateGroup' | 'filterState', value: string): void {
     this[key].set(value);
   }
 
   protected applyFilters(): void {
+    this.errorMessage.set('');
+
+    const grupoStr = this.filterGrupo().trim();
+    const dateGroup = this.filterDateGroup();
+
+    if (grupoStr && !dateGroup) {
+      const datesForGroup = new Set(
+        this.consultas()
+          .filter(c => c.numeroGrupo.toString() === grupoStr)
+          .map(c => this.toLocalDateString(c.registradoEn))
+      );
+
+      if (datesForGroup.size > 1) {
+        this.errorMessage.set(`Hay más de un grupo llamado "Grupo ${grupoStr}", filtre también por día.`);
+        return;
+      }
+    }
+
     this.appliedFilters.set({
       dni: this.filterDni().trim(),
       name: this.filterName().trim(),
-      grupo: this.filterGrupo().trim(),
+      grupo: grupoStr,
       placa: this.filterPlaca().trim(),
-      dateGroup: this.filterDateGroup(),
-      dateUser: this.filterDateUser(),
+      dateGroup: dateGroup,
       state: this.filterState()
     });
   }
@@ -107,7 +133,6 @@ export class SupervisorConsultas {
     this.filterGrupo.set('');
     this.filterPlaca.set('');
     this.filterDateGroup.set('');
-    this.filterDateUser.set('');
     this.filterState.set('');
     this.applyFilters();
   }

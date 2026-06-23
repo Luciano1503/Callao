@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.time.Instant;
 
 import com.callao.backend.modules.health.application.HealthService;
 import com.callao.backend.modules.health.dto.HealthResponse;
@@ -21,5 +22,10 @@ public class HealthController {
 	@GetMapping
 	public ResponseEntity<ApiResponse<HealthResponse>> getStatus() {
 		return ResponseEntity.ok(ApiResponse.ok("Servicio disponible.", healthService.getStatus()));
+	}
+
+	@GetMapping("/time")
+	public ResponseEntity<ApiResponse<String>> getServerTime() {
+		return ResponseEntity.ok(ApiResponse.ok("Hora actual del servidor.", Instant.now().toString()));
 	}
 }

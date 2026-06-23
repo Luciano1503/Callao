@@ -12,6 +12,10 @@ export class WebsocketService {
   private connectionSubject = new Subject<boolean>();
   private veedoresSubject = new Subject<EvaluatedGroup>();
 
+  public onConnectionChange(): Observable<boolean> {
+    return this.connectionSubject.asObservable();
+  }
+
   constructor() {
     this.client = new Client({
       brokerURL: `${environment.apiUrl.replace('/api/v1', '').replace('http', 'ws')}/ws-api/websocket`,
@@ -49,6 +53,17 @@ export class WebsocketService {
 
   public connect(): void {
     if (!this.client.active) {
+      const rawSession = sessionStorage.getItem('callao.auth.session');
+      if (rawSession) {
+        try {
+          const session = JSON.parse(rawSession);
+          this.client.connectHeaders = {
+            Authorization: `Bearer ${session.token}`
+          };
+        } catch (e) {
+          console.error('Error parsing session for WS token', e);
+        }
+      }
       this.client.activate();
     }
   }
