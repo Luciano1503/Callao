@@ -23,7 +23,7 @@ spring:
 
 app:
   jwt:
-    secret: ${APP_JWT_SECRET:8f7e2d9a4b6c1d3e5f7a9b0c2d4e6f8a1b3c5d7e9f1a2b4c6d8e0f2a4b6c8d0e}
+    secret: ${APP_JWT_SECRET}
     expiration-ms: 86400000
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:4200,http://127.0.0.1:4200,https://callao-ame9.vercel.app}
