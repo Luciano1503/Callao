@@ -15,7 +15,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -36,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 List<GrantedAuthority> authorities = new java.util.ArrayList<>();
                 authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
-                
+
                 if (role != null && role.startsWith("VEEDOR_")) {
                     authorities.add(new SimpleGrantedAuthority("ROLE_VEEDOR"));
                 }

@@ -33,7 +33,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/api/v1/auth/login").permitAll()
                 .requestMatchers("/api/v1/auth/forgot-password").permitAll()
-                .requestMatchers("/api/health").permitAll()
+                .requestMatchers("/api/v1/health/**").permitAll()
                 .requestMatchers("/ws-api/**").permitAll()
                 .anyRequest().authenticated()
             )
