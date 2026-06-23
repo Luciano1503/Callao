@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/evaluador-circuito")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('EVALUADOR') or hasRole('ADMIN')")
+@PreAuthorize("hasRole('EVALUADOR_CIRCUITO') or hasRole('ADMIN')")
 public class EvaluatorCircuitController {
 
 	private final EvaluatorCircuitService service;

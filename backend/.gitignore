@@ -36,3 +36,4 @@ build/
 .env
 application-local.yml
 application-dev.yml
+run-local.ps1

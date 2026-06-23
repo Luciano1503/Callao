@@ -27,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/supervisor-evaluados")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('SUPERVISOR') or hasRole('ADMIN')")
+@PreAuthorize("hasRole('SUPERVISOR_EVALUADOS') or hasRole('ADMIN')")
 public class SupervisorEvaluadosController {
 
 	private final SupervisorEvaluadosService supervisorEvaluadosService;
