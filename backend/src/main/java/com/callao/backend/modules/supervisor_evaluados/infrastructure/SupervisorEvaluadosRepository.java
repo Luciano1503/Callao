@@ -88,7 +88,7 @@ public class SupervisorEvaluadosRepository {
 				rs.getString("color_hex"),
 				rs.getString("estado"),
 				rs.getInt("total_evaluados"),
-				rs.getTimestamp("registrado_en").toLocalDateTime()
+				rs.getTimestamp("registrado_en") != null ? rs.getTimestamp("registrado_en").toLocalDateTime() : null
 			),
 			supervisorId
 		);
@@ -132,7 +132,7 @@ public class SupervisorEvaluadosRepository {
 		);
 	}
 
-	public List<com.callao.backend.modules.supervisor_evaluados.dto.SupervisorConsultaResponse> findAllEvaluatedBySupervisor(Long supervisorId) {
+	public List<com.callao.backend.modules.supervisor_evaluados.dto.SupervisorConsultaResponse> findAllEvaluated() {
 		return jdbcTemplate.query(
 			"""
 			SELECT e.id,
@@ -152,7 +152,6 @@ public class SupervisorEvaluadosRepository {
 			INNER JOIN callao.grupos_evaluacion g ON g.id = e.grupo_id
 			LEFT JOIN callao.colores_grupo cg ON cg.id = g.color_id
 			INNER JOIN callao.categorias c ON c.id = e.categoria_id
-			WHERE g.supervisor_id = ?
 			ORDER BY e.creado_en DESC
 			""",
 			(rs, rowNum) -> new com.callao.backend.modules.supervisor_evaluados.dto.SupervisorConsultaResponse(
@@ -169,16 +168,23 @@ public class SupervisorEvaluadosRepository {
 				rs.getBoolean("es_vip"),
 				toLocalDateTime(rs.getTimestamp("registrado_en")),
 				toLocalDateTime(rs.getTimestamp("creado_en"))
-			),
-			supervisorId
+			)
 		);
+	}
+
+	public int getMaxGroupNumber() {
+		Integer max = jdbcTemplate.queryForObject(
+			"SELECT MAX(numero_grupo) FROM callao.grupos_evaluacion",
+			Integer.class
+		);
+		return max == null ? 0 : max;
 	}
 
 	public GroupRow createGroup(Integer groupNumber, Long colorId, Long supervisorId) {
 		Long groupId = jdbcTemplate.queryForObject(
 			"""
-			INSERT INTO callao.grupos_evaluacion (numero_grupo, color_id, supervisor_id)
-			VALUES (?, ?, ?)
+			INSERT INTO callao.grupos_evaluacion (numero_grupo, color_id, supervisor_id, registrado_en)
+			VALUES (?, ?, ?, CURRENT_TIMESTAMP)
 			RETURNING id
 			""",
 			Long.class,
@@ -356,7 +362,7 @@ public class SupervisorEvaluadosRepository {
 					rs.getLong("supervisor_id"),
 					rs.getString("observaciones"),
 					rs.getString("estado"),
-					rs.getTimestamp("registrado_en").toLocalDateTime(),
+					toLocalDateTime(rs.getTimestamp("registrado_en")),
 					toLocalDateTime(rs.getTimestamp("finalizado_en"))
 				),
 				args

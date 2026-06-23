@@ -36,7 +36,7 @@ public class SupervisorEvaluadosService {
 
 		return repository.findLatestGroupBySupervisor(supervisorId)
 			.map(group -> buildResponse(group.id()))
-			.orElseGet(() -> createNextGroup(new CreateGroupRequest(supervisorId, null)));
+			.orElse(null);
 	}
 
 	public List<EvaluatedGroupSummaryResponse> findGroups(Long supervisorId) {
@@ -61,7 +61,7 @@ public class SupervisorEvaluadosService {
 			throw new BusinessException("Complete los 10 evaluados del grupo actual antes de crear un nuevo grupo.");
 		}
 
-		int nextGroupNumber = latest == null ? 1 : latest.numeroGrupo() + 1;
+		int nextGroupNumber = repository.getMaxGroupNumber() + 1;
 		Long colorId = request.colorId() == null ? resolveColorId(nextGroupNumber) : request.colorId();
 		ensureActiveColor(colorId);
 		GroupRow created = repository.createGroup(nextGroupNumber, colorId, supervisorId);
@@ -206,7 +206,7 @@ public class SupervisorEvaluadosService {
 	}
 
 	public List<com.callao.backend.modules.supervisor_evaluados.dto.SupervisorConsultaResponse> getConsultas(Long supervisorId) {
-		return repository.findAllEvaluatedBySupervisor(supervisorId);
+		return repository.findAllEvaluated();
 	}
 
 	private void ensureGroupBelongsToSupervisor(GroupRow group, Long supervisorId) {

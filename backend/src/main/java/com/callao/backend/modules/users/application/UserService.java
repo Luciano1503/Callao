@@ -57,6 +57,7 @@ public class UserService {
 			celular,
 			passwordEncoder.encode(generatedPassword),
 			estado,
+			request.firmaJpgUrl(),
 			request.creadoPor()
 		));
 
@@ -85,7 +86,8 @@ public class UserService {
 			created.estado(),
 			created.debeCambiarPassword(),
 			emailSent,
-			created.creadoEn()
+			created.creadoEn(),
+			created.firmaJpgUrl()
 		);
 	}
 

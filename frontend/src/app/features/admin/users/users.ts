@@ -17,6 +17,8 @@ import { UserResponse } from '../../../core/models/user';
 import { AuthService } from '../../../core/services/auth.service';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { UserService } from '../../../core/services/user.service';
+import { ScannerService } from '../../../core/services/scanner.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface ZoneFilter {
   value: string;
@@ -49,6 +51,7 @@ export class Users {
   private readonly authService = inject(AuthService);
   private readonly catalogService = inject(CatalogService);
   private readonly userService = inject(UserService);
+  private readonly scannerService = inject(ScannerService);
 
   protected readonly users = signal<UserResponse[]>([]);
   protected readonly roles = signal<RolCatalog[]>([]);
@@ -89,6 +92,10 @@ export class Users {
     this.catalogService.getRoles().subscribe({
       next: (roles) => this.roles.set(roles),
       error: () => this.roles.set([])
+    });
+
+    this.scannerService.scan$.pipe(takeUntilDestroyed()).subscribe((dni) => {
+      this.searchFilter.set(dni);
     });
   }
 

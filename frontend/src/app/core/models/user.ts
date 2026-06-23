@@ -5,6 +5,7 @@ export interface CreateUserRequest {
   celular?: string;
   rolId: number;
   estado: 'ACTIVO' | 'INACTIVO';
+  firmaJpgUrl?: string;
   creadoPor: number | null;
 }
 
@@ -29,4 +30,5 @@ export interface UserResponse {
   debeCambiarPassword: boolean;
   emailSent: boolean;
   creadoEn: string;
+  firmaJpgUrl?: string;
 }

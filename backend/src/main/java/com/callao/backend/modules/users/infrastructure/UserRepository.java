@@ -29,10 +29,11 @@ public class UserRepository {
 				password_hash,
 				estado,
 				debe_cambiar_password,
+				firma_jpg_url,
 				creado_por
 			)
-			VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, ?)
-			RETURNING id, rol_id, dni, nombres, correo, celular, password_hash, estado, debe_cambiar_password, creado_en
+			VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, ?, ?)
+			RETURNING id, rol_id, dni, nombres, correo, celular, password_hash, estado, debe_cambiar_password, creado_en, firma_jpg_url
 			""",
 			(rs, rowNum) -> new UserRow(
 				rs.getLong("id"),
@@ -44,7 +45,8 @@ public class UserRepository {
 				rs.getString("password_hash"),
 				rs.getString("estado"),
 				rs.getBoolean("debe_cambiar_password"),
-				rs.getTimestamp("creado_en").toLocalDateTime()
+				rs.getTimestamp("creado_en").toLocalDateTime(),
+				rs.getString("firma_jpg_url")
 			),
 			row.rolId(),
 			row.dni(),
@@ -53,6 +55,7 @@ public class UserRepository {
 			row.celular(),
 			row.passwordHash(),
 			row.estado(),
+			row.firmaJpgUrl(),
 			row.creadoPor()
 		);
 	}
@@ -70,7 +73,8 @@ public class UserRepository {
 			       r.nombre AS rol_nombre,
 			       u.estado,
 			       u.debe_cambiar_password,
-			       u.creado_en
+			       u.creado_en,
+			       u.firma_jpg_url
 			FROM callao.usuarios u
 			INNER JOIN callao.roles r ON r.id = u.rol_id
 			ORDER BY u.creado_en DESC, u.id DESC
@@ -87,7 +91,8 @@ public class UserRepository {
 				rs.getString("estado"),
 				rs.getBoolean("debe_cambiar_password"),
 				true,
-				rs.getTimestamp("creado_en").toLocalDateTime()
+				rs.getTimestamp("creado_en").toLocalDateTime(),
+				rs.getString("firma_jpg_url")
 			)
 		);
 	}
@@ -106,7 +111,8 @@ public class UserRepository {
 				       r.nombre AS rol_nombre,
 				       u.estado,
 				       u.debe_cambiar_password,
-				       u.creado_en
+				       u.creado_en,
+				       u.firma_jpg_url
 				FROM callao.usuarios u
 				INNER JOIN callao.roles r ON r.id = u.rol_id
 				WHERE u.id = ?
@@ -123,7 +129,8 @@ public class UserRepository {
 					rs.getString("estado"),
 					rs.getBoolean("debe_cambiar_password"),
 					true,
-					rs.getTimestamp("creado_en").toLocalDateTime()
+					rs.getTimestamp("creado_en").toLocalDateTime(),
+					rs.getString("firma_jpg_url")
 				),
 				userId
 			);
@@ -222,6 +229,7 @@ public class UserRepository {
 		String celular,
 		String passwordHash,
 		String estado,
+		String firmaJpgUrl,
 		Long creadoPor
 	) {
 	}
@@ -236,7 +244,8 @@ public class UserRepository {
 		String passwordHash,
 		String estado,
 		boolean debeCambiarPassword,
-		java.time.LocalDateTime creadoEn
+		java.time.LocalDateTime creadoEn,
+		String firmaJpgUrl
 	) {
 	}
 

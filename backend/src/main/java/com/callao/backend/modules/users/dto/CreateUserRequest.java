@@ -30,6 +30,8 @@ public record CreateUserRequest(
 	@NotBlank(message = "El estado es obligatorio.")
 	String estado,
 
+	String firmaJpgUrl,
+
 	Long creadoPor
 ) {
 }

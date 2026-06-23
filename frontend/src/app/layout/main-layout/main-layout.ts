@@ -34,21 +34,21 @@ const PROFILE_INFO: Record<ShellProfile, ShellProfileInfo> = {
     initials: 'AP'
   },
   supervisor: {
-    brand: 'GORE Callao',
+    brand: 'Control de Circuito de Manejo',
     subtitle: 'Supervisor de evaluados',
     userName: 'Supervisor',
     userMeta: 'Relacion de evaluados',
     initials: 'SE'
   },
   evaluador: {
-    brand: 'GORE Callao',
+    brand: 'Control de Circuito de Manejo',
     subtitle: 'Centro de circuito',
     userName: 'Evaluador',
     userMeta: 'Fichas de evaluacion',
     initials: 'EC'
   },
   veedor: {
-    brand: 'GORE Callao',
+    brand: 'Control de Circuito de Manejo',
     subtitle: 'Veedores de campo',
     userName: 'Veedor',
     userMeta: 'Evaluacion tecnica',

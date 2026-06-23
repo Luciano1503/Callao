@@ -1,12 +1,14 @@
 <section>
-  <header class="page-header" style="display: flex; align-items: flex-start; gap: 1rem;">
-    <div style="background-color: #f0f4f8; padding: 0.75rem; border-radius: 0.5rem; color: #0076ff;">
-      <svg lucideSearch class="icon-lg"></svg>
-    </div>
-    <div>
-      <p class="eyebrow">Supervisor de evaluados</p>
-      <h1 class="page-title" style="margin-bottom: 0.25rem;">Consultas y Registro</h1>
-      <p class="page-copy" style="margin-top: 0;">Busqueda global en el historial de evaluados registrados. Utilice los filtros para encontrar registros especificos.</p>
+  <header class="page-header">
+    <div style="display: flex; gap: 20px; align-items: center;">
+      <div style="display: grid; place-items: center; width: 64px; height: 64px; background-color: #f8fbff; border: 1px solid #dce8fa; border-radius: 12px; color: var(--primary);">
+        <svg lucideSearch [size]="28" class="icon"></svg>
+      </div>
+      <div>
+        <p class="eyebrow">Supervisor de evaluados</p>
+        <h1 class="page-title" style="margin-bottom: 6px;">Consultas y Registro</h1>
+        <p class="page-copy" style="margin: 0;">Búsqueda global en el historial de evaluados registrados. Utilice los filtros para encontrar registros específicos.</p>
+      </div>
     </div>
   </header>
 
@@ -18,89 +20,98 @@
     <section class="panel-card loading-card">Cargando datos...</section>
   } @else {
     <section class="panel-card relation-list-card">
-      <div class="filter-bar">
-        <label class="filter-field">
-          <span class="filter-label">DNI</span>
-          <input
-            type="text"
-            class="field"
-            placeholder="Buscar DNI"
-            [value]="filterDni()"
-            (input)="updateFilter('filterDni', $any($event.target).value)"
-            (keyup.enter)="applyFilters()"
-          />
-        </label>
-        <label class="filter-field">
-          <span class="filter-label">Nombres</span>
-          <input
-            type="text"
-            class="field"
-            placeholder="Buscar nombre"
-            [value]="filterName()"
-            (input)="updateFilter('filterName', $any($event.target).value)"
-            (keyup.enter)="applyFilters()"
-          />
-        </label>
-        <label class="filter-field">
-          <span class="filter-label">Placa</span>
-          <input
-            type="text"
-            class="field"
-            placeholder="Buscar placa"
-            [value]="filterPlaca()"
-            (input)="updateFilter('filterPlaca', $any($event.target).value)"
-            (keyup.enter)="applyFilters()"
-          />
-        </label>
-        <label class="filter-field">
-          <span class="filter-label">Grupo</span>
-          <input
-            type="number"
-            class="field"
-            placeholder="N° Grupo"
-            [value]="filterGrupo()"
-            (input)="updateFilter('filterGrupo', $any($event.target).value)"
-            (keyup.enter)="applyFilters()"
-          />
-        </label>
-        <label class="filter-field">
-          <span class="filter-label">Fecha Reg. Grupo</span>
-          <input
-            type="date"
-            class="field"
-            [value]="filterDateGroup()"
-            (change)="updateFilter('filterDateGroup', $any($event.target).value)"
-          />
-        </label>
-        <label class="filter-field">
-          <span class="filter-label">Fecha Evaluado</span>
-          <input
-            type="date"
-            class="field"
-            [value]="filterDateUser()"
-            (change)="updateFilter('filterDateUser', $any($event.target).value)"
-          />
-        </label>
-        <label class="filter-field">
-          <span class="filter-label">Estado</span>
-          <select
-            class="select"
-            [value]="filterState()"
-            (change)="updateFilter('filterState', $any($event.target).value)"
-          >
-            <option value="">Todos</option>
-            <option value="PENDIENTE">Pendiente</option>
-            <option value="APROBADO">Aprobado</option>
-            <option value="DESAPROBADO">Desaprobado</option>
-          </select>
-        </label>
-        <div class="filter-actions">
-          <button class="btn btn-secondary" type="button" (click)="clearFilters()">
-            <span>Limpiar</span>
+      <div style="padding: 24px 28px; background: #f8fbff; border-bottom: 1px solid var(--line-soft); display: flex; flex-direction: column; gap: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; align-items: end;">
+          <label style="display: flex; flex-direction: column; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--primary-strong);">DNI</span>
+            <input
+              type="text"
+              class="field"
+              placeholder="Buscar DNI"
+              [value]="filterDni()"
+              (input)="updateFilter('filterDni', $any($event.target).value)"
+              (keyup.enter)="applyFilters()"
+              style="height: 44px; border-radius: 6px;"
+            />
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--primary-strong);">Nombres</span>
+            <input
+              type="text"
+              class="field"
+              placeholder="Buscar nombre"
+              [value]="filterName()"
+              (input)="updateFilter('filterName', $any($event.target).value)"
+              (keyup.enter)="applyFilters()"
+              style="height: 44px; border-radius: 6px;"
+            />
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--primary-strong);">Placa</span>
+            <input
+              type="text"
+              class="field"
+              placeholder="Buscar placa"
+              [value]="filterPlaca()"
+              (input)="updateFilter('filterPlaca', $any($event.target).value)"
+              (keyup.enter)="applyFilters()"
+              style="height: 44px; border-radius: 6px;"
+            />
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--primary-strong);">Grupo</span>
+            <input
+              type="number"
+              class="field"
+              placeholder="N° Grupo"
+              [value]="filterGrupo()"
+              (input)="updateFilter('filterGrupo', $any($event.target).value)"
+              (keyup.enter)="applyFilters()"
+              style="height: 44px; border-radius: 6px;"
+            />
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--primary-strong);">Fecha Reg. Grupo</span>
+            <input
+              type="date"
+              class="field"
+              [value]="filterDateGroup()"
+              (change)="updateFilter('filterDateGroup', $any($event.target).value)"
+              style="height: 44px; border-radius: 6px;"
+            />
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--primary-strong);">Fecha Evaluado</span>
+            <input
+              type="date"
+              class="field"
+              [value]="filterDateUser()"
+              (change)="updateFilter('filterDateUser', $any($event.target).value)"
+              style="height: 44px; border-radius: 6px;"
+            />
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 700; color: var(--primary-strong);">Estado</span>
+            <select
+              class="select"
+              [value]="filterState()"
+              (change)="updateFilter('filterState', $any($event.target).value)"
+              style="height: 44px; border-radius: 6px;"
+            >
+              <option value="">Todos</option>
+              <option value="PENDIENTE">Pendiente</option>
+              <option value="APROBADO">Aprobado</option>
+              <option value="DESAPROBADO">Desaprobado</option>
+            </select>
+          </label>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px; border-top: 1px dashed #c0cde3;">
+          <button class="btn btn-secondary" type="button" (click)="clearFilters()" style="height: 44px; min-width: 130px;">
+            <span>Limpiar Filtros</span>
           </button>
-          <button class="btn btn-primary" type="button" (click)="applyFilters()">
-            <svg lucideListFilter class="icon"></svg>
-            <span>Filtrar</span>
+          <button class="btn btn-primary" type="button" (click)="applyFilters()" style="height: 44px; min-width: 150px;">
+            <svg lucideSearch class="icon"></svg>
+            <span>Aplicar Filtros</span>
           </button>
         </div>
       </div>

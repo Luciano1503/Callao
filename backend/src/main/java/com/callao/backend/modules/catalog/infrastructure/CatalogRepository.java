@@ -141,4 +141,53 @@ public class CatalogRepository {
 			)
 		);
 	}
+
+	public java.util.Map<String, String> getFirmasRoles() {
+		java.util.Map<String, String> firmas = new java.util.HashMap<>();
+		jdbcTemplate.query(
+			"""
+			SELECT r.codigo, MAX(u.firma_jpg_url) as firma_url
+			FROM callao.usuarios u
+			INNER JOIN callao.roles r ON r.id = u.rol_id
+			WHERE u.estado = 'ACTIVO' AND u.firma_jpg_url IS NOT NULL
+			GROUP BY r.codigo
+			""",
+			rs -> {
+				firmas.put(rs.getString("codigo"), rs.getString("firma_url"));
+			}
+		);
+		return firmas;
+	}
+
+	public java.util.Map<String, String> getFirmasGrupo(Long groupId) {
+		java.util.Map<String, String> firmas = new java.util.HashMap<>();
+		jdbcTemplate.query(
+			"""
+			SELECT 'SUPERVISOR_EVALUADOS' AS rol_codigo, u.firma_jpg_url AS firma_url
+			FROM callao.grupos_evaluacion g
+			INNER JOIN callao.usuarios u ON u.id = g.supervisor_id
+			WHERE g.id = ? AND u.firma_jpg_url IS NOT NULL
+			
+			UNION ALL
+			
+			SELECT 'EVALUADOR_CIRCUITO' AS rol_codigo, u.firma_jpg_url AS firma_url
+			FROM callao.fichas_circuito fc
+			INNER JOIN callao.usuarios u ON u.id = fc.evaluador_id
+			WHERE fc.grupo_id = ? AND u.firma_jpg_url IS NOT NULL
+			
+			UNION ALL
+			
+			SELECT r.codigo AS rol_codigo, u.firma_jpg_url AS firma_url
+			FROM callao.fichas_veedor fv
+			INNER JOIN callao.usuarios u ON u.id = fv.veedor_id
+			INNER JOIN callao.roles r ON r.id = u.rol_id
+			WHERE fv.grupo_id = ? AND u.firma_jpg_url IS NOT NULL
+			""",
+			rs -> {
+				firmas.put(rs.getString("rol_codigo"), rs.getString("firma_url"));
+			},
+			groupId, groupId, groupId
+		);
+		return firmas;
+	}
 }

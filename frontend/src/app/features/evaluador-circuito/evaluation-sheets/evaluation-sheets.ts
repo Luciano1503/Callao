@@ -8,6 +8,8 @@ import { EvaluatorSheetDetail, EvaluatorSheetSummary, EvaluatorVeedorReview } fr
 import { AuthService } from '../../../core/services/auth.service';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { EvaluatorSheetService } from '../../../core/services/evaluator-sheet.service';
+import { ScannerService } from '../../../core/services/scanner.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 type DetailMode = 'view' | 'edit';
 type CriteriaKind = 'habilidad' | 'reglamento';
@@ -28,6 +30,7 @@ export class EvaluationSheets {
   private readonly authService = inject(AuthService);
   private readonly catalogService = inject(CatalogService);
   private readonly evaluatorService = inject(EvaluatorSheetService);
+  private readonly scannerService = inject(ScannerService);
 
   protected readonly categories = signal<CategoriaCatalog[]>([]);
   protected readonly sheets = signal<EvaluatorSheetSummary[]>([]);
@@ -96,6 +99,11 @@ export class EvaluationSheets {
         this.isLoading.set(false);
         this.errorMessage.set(this.resolveError(error));
       }
+    });
+
+    this.scannerService.scan$.pipe(takeUntilDestroyed()).subscribe((dni) => {
+      this.filterDni.set(dni);
+      this.applyFilters();
     });
   }
 

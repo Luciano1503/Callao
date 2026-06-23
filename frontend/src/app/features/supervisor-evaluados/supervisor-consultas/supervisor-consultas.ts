@@ -6,6 +6,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { SupervisorEvaluadosService } from '../../../core/services/supervisor-evaluados.service';
 import { SupervisorConsulta } from '../../../core/models/evaluated-group';
+import { ScannerService } from '../../../core/services/scanner.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-supervisor-consultas',
@@ -17,6 +19,7 @@ import { SupervisorConsulta } from '../../../core/models/evaluated-group';
 export class SupervisorConsultas {
   private readonly authService = inject(AuthService);
   private readonly supervisorService = inject(SupervisorEvaluadosService);
+  private readonly scannerService = inject(ScannerService);
 
   protected readonly consultas = signal<SupervisorConsulta[]>([]);
   protected readonly isLoading = signal(true);
@@ -75,6 +78,11 @@ export class SupervisorConsultas {
 
   constructor() {
     this.loadConsultas();
+
+    this.scannerService.scan$.pipe(takeUntilDestroyed()).subscribe((dni) => {
+      this.filterDni.set(dni);
+      this.applyFilters();
+    });
   }
 
   protected updateFilter(key: 'filterDni' | 'filterName' | 'filterGrupo' | 'filterPlaca' | 'filterDateGroup' | 'filterDateUser' | 'filterState', value: string): void {

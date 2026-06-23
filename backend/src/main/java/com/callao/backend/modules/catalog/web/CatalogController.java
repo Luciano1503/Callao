@@ -66,4 +66,14 @@ public class CatalogController {
 	public ResponseEntity<ApiResponse<VeedorCriteriosResponse>> getCriteriosVeedor(@PathVariable String tipoVeedor) {
 		return ResponseEntity.ok(ApiResponse.ok("Criterios del veedor obtenidos.", catalogService.getCriteriosByTipoVeedor(tipoVeedor)));
 	}
+
+	@GetMapping("/firmas-roles")
+	public ResponseEntity<ApiResponse<java.util.Map<String, String>>> getFirmasRoles() {
+		return ResponseEntity.ok(ApiResponse.ok("Firmas de roles obtenidas.", catalogService.getFirmasRoles()));
+	}
+
+	@GetMapping("/firmas-grupo/{groupId}")
+	public ResponseEntity<ApiResponse<java.util.Map<String, String>>> getFirmasGrupo(@PathVariable Long groupId) {
+		return ResponseEntity.ok(ApiResponse.ok("Firmas del grupo obtenidas.", catalogService.getFirmasGrupo(groupId)));
+	}
 }

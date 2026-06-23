@@ -8,6 +8,8 @@ import { EvaluatedGroup, EvaluatedGroupSummary } from '../../../core/models/eval
 import { AuthService } from '../../../core/services/auth.service';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { SupervisorEvaluadosService } from '../../../core/services/supervisor-evaluados.service';
+import { ScannerService } from '../../../core/services/scanner.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-evaluated-relation',
@@ -18,6 +20,9 @@ export class EvaluatedRelation {
   private readonly authService = inject(AuthService);
   private readonly catalogService = inject(CatalogService);
   private readonly supervisorService = inject(SupervisorEvaluadosService);
+  private readonly scannerService = inject(ScannerService);
+
+  protected readonly scannedDni = signal('');
 
   protected readonly categories = signal<CategoriaCatalog[]>([]);
   protected readonly colors = signal<ColorCatalog[]>([]);
@@ -26,6 +31,8 @@ export class EvaluatedRelation {
   protected readonly groups = signal<EvaluatedGroupSummary[]>([]);
   protected readonly selectedSedeId = signal<number | null>(null);
   protected readonly activeGroup = signal<EvaluatedGroup | null>(null);
+  protected readonly newGroupColorId = signal<number | null>(null);
+  protected readonly showNewGroupForm = signal(false);
   protected readonly observations = signal('');
   protected readonly isLoading = signal(true);
   protected readonly isChangingGroup = signal(false);
@@ -96,6 +103,11 @@ export class EvaluatedRelation {
         this.errorMessage.set(this.resolveError(error));
       }
     });
+
+    this.scannerService.scan$.pipe(takeUntilDestroyed()).subscribe((dni) => {
+      this.scannedDni.set(dni);
+      this.successMessage.set('DNI capturado automáticamente: ' + dni);
+    });
   }
 
   protected addEvaluated(event: SubmitEvent): void {
@@ -138,6 +150,7 @@ export class EvaluatedRelation {
         this.loadGroups();
         this.successMessage.set('Evaluado registrado correctamente.');
         this.placaSearchTerm.set('');
+        this.scannedDni.set('');
         this.selectedSedeId.set(null);
         form.reset();
       },
@@ -148,13 +161,35 @@ export class EvaluatedRelation {
     });
   }
 
+  protected startCreatingGroup(): void {
+    this.showNewGroupForm.set(true);
+    this.newGroupColorId.set(null);
+  }
+
+  protected cancelCreatingGroup(): void {
+    this.showNewGroupForm.set(false);
+    this.newGroupColorId.set(null);
+  }
+
+  protected selectNewGroupColor(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.newGroupColorId.set(value ? Number(value) : null);
+  }
+
   protected createGroup(): void {
+    if (!this.newGroupColorId()) {
+      this.errorMessage.set('Debe seleccionar un color para crear el grupo.');
+      return;
+    }
+
     this.clearMessages();
     this.isCreatingGroup.set(true);
 
-    this.supervisorService.createGroup({ supervisorId: this.supervisorId(), colorId: null }).subscribe({
+    this.supervisorService.createGroup({ supervisorId: this.supervisorId(), colorId: this.newGroupColorId() }).subscribe({
       next: (group) => {
         this.isCreatingGroup.set(false);
+        this.showNewGroupForm.set(false);
+        this.newGroupColorId.set(null);
         this.setActiveGroup(group);
         this.loadGroups();
         this.successMessage.set(`Grupo ${group.numeroGrupo} creado correctamente.`);

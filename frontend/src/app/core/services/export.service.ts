@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -6,14 +6,39 @@ import * as XLSX from 'xlsx';
 import { CriterioCatalog } from '../models/catalog';
 import { FinalReviewDetail } from '../models/final-review';
 import { VeedorSheet } from '../models/veedor-sheet';
+import { CatalogService } from './catalog.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ExportService {
+  private readonly catalogService = inject(CatalogService);
   private readonly LOGO_PATH = '/assets/gobiernocallao.jpeg';
 
+  private async loadSignatures(firmasRoles: { [key: string]: string }): Promise<{ [key: string]: string }> {
+    const loaded: { [key: string]: string } = {};
+    for (const [role, url] of Object.entries(firmasRoles)) {
+      if (url) {
+        try {
+          loaded[role] = await this.loadImage(url);
+        } catch (e) {
+          console.warn(`No se pudo cargar la firma del rol ${role}`);
+        }
+      }
+    }
+    return loaded;
+  }
+
   async exportToPdf(detail: FinalReviewDetail): Promise<void> {
+    const firmasRoles = await new Promise<{ [key: string]: string }>((resolve) => {
+      this.catalogService.getFirmasRoles().subscribe({ next: resolve, error: () => resolve({}) });
+    });
+    const firmasGrupo = await new Promise<{ [key: string]: string }>((resolve) => {
+      this.catalogService.getFirmasGrupo(detail.grupo.id).subscribe({ next: resolve, error: () => resolve({}) });
+    });
+    const firmasMap = { ...firmasRoles, ...firmasGrupo };
+    const firmas = await this.loadSignatures(firmasMap);
+
     const doc = new jsPDF('p', 'mm', 'a4');
     
     // --- PAGE 1: RELACIÓN DE EVALUADOS (Resumen General) ---
@@ -135,8 +160,13 @@ export class ExportService {
 
     const sigY = footerStartY + 30;
     doc.line(20, sigY, 60, sigY);
+    if (firmas['EVALUADOR_CIRCUITO']) doc.addImage(firmas['EVALUADOR_CIRCUITO'], 'JPEG', 25, sigY - 18, 30, 15);
+
     doc.line(75, sigY, 135, sigY);
+    if (firmas['ADMIN']) doc.addImage(firmas['ADMIN'], 'JPEG', 90, sigY - 18, 30, 15);
+
     doc.line(150, sigY, 190, sigY);
+    if (firmas['SUPERVISOR_EVALUADOS']) doc.addImage(firmas['SUPERVISOR_EVALUADOS'], 'JPEG', 155, sigY - 18, 30, 15);
 
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
@@ -310,9 +340,12 @@ export class ExportService {
       const sigActaY = finalY + 45;
       
       doc.line(15, sigActaY, 55, sigActaY);
+      const veedorKey = `VEEDOR_${veedor.codigo}`;
+      if (firmas[veedorKey]) doc.addImage(firmas[veedorKey], 'JPEG', 20, sigActaY - 18, 30, 15);
       doc.text('Evaluador', 35, sigActaY + 5, { align: 'center' });
       
       doc.line(75, sigActaY, 135, sigActaY);
+      if (firmas['ADMIN']) doc.addImage(firmas['ADMIN'], 'JPEG', 90, sigActaY - 18, 30, 15);
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
       doc.text('GOBIERNO REGIONAL DEL CALLAO', 105, sigActaY - 6, { align: 'center' });
@@ -325,6 +358,7 @@ export class ExportService {
       
       doc.setFont('helvetica', 'normal');
       doc.line(155, sigActaY, 195, sigActaY);
+      if (firmas['SUPERVISOR_EVALUADOS']) doc.addImage(firmas['SUPERVISOR_EVALUADOS'], 'JPEG', 160, sigActaY - 18, 30, 15);
       doc.text('Supervisor', 175, sigActaY + 5, { align: 'center' });
     }
 
@@ -332,6 +366,15 @@ export class ExportService {
   }
 
   async exportVeedorSheetToPdf(sheet: VeedorSheet, skillOptions: CriterioCatalog[], regOptions: CriterioCatalog[]): Promise<void> {
+    const firmasRoles = await new Promise<{ [key: string]: string }>((resolve) => {
+      this.catalogService.getFirmasRoles().subscribe({ next: resolve, error: () => resolve({}) });
+    });
+    const firmasGrupo = await new Promise<{ [key: string]: string }>((resolve) => {
+      this.catalogService.getFirmasGrupo(sheet.grupoId).subscribe({ next: resolve, error: () => resolve({}) });
+    });
+    const firmasMap = { ...firmasRoles, ...firmasGrupo };
+    const firmas = await this.loadSignatures(firmasMap);
+
     const doc = new jsPDF('p', 'mm', 'a4');
     
     let imgData: string | null = null;
@@ -501,11 +544,14 @@ export class ExportService {
     const sigActaY = finalY + 45;
     
     doc.line(15, sigActaY, 55, sigActaY);
+    const veedorKey = `VEEDOR_${sheet.tipoVeedorCodigo}`;
+    if (firmas[veedorKey]) doc.addImage(firmas[veedorKey], 'JPEG', 20, sigActaY - 18, 30, 15);
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
     doc.text('Evaluador', 35, sigActaY + 5, { align: 'center' });
     
     doc.line(75, sigActaY, 135, sigActaY);
+    if (firmas['ADMIN']) doc.addImage(firmas['ADMIN'], 'JPEG', 90, sigActaY - 18, 30, 15);
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.text('GOBIERNO REGIONAL DEL CALLAO', 105, sigActaY - 6, { align: 'center' });
@@ -518,6 +564,7 @@ export class ExportService {
     
     doc.setFont('helvetica', 'normal');
     doc.line(155, sigActaY, 195, sigActaY);
+    if (firmas['SUPERVISOR_EVALUADOS']) doc.addImage(firmas['SUPERVISOR_EVALUADOS'], 'JPEG', 160, sigActaY - 18, 30, 15);
     doc.text('Supervisor', 175, sigActaY + 5, { align: 'center' });
 
     doc.save(`Grupo_${sheet.numeroGrupo}_Acta_${sheet.tipoVeedorCodigo}.pdf`);

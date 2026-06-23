@@ -14,6 +14,7 @@ public record UserResponse(
 	String estado,
 	boolean debeCambiarPassword,
 	boolean emailSent,
-	LocalDateTime creadoEn
+	LocalDateTime creadoEn,
+	String firmaJpgUrl
 ) {
 }

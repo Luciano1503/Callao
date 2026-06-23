@@ -41,7 +41,7 @@
         <div class="form-grid">
           <label class="field-group">
             <span class="field-label">DNI <span class="required">*</span></span>
-            <input class="field" name="dni" inputmode="numeric" maxlength="8" minlength="8" pattern="[0-9]{8}" placeholder="Ingrese el DNI" required oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+            <input class="field" name="dni" inputmode="numeric" maxlength="8" minlength="8" pattern="[0-9]{8}" placeholder="Ingrese el DNI" required [value]="scannedDni()" (input)="scannedDni.set($any($event.target).value)" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
           </label>
 
           <label class="field-group">
@@ -57,6 +57,151 @@
           <label class="field-group">
             <span class="field-label">Numero de celular</span>
             <input class="field" name="celular" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" placeholder="Ej. 999888777" />
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label class="field-group full-width">
+            <span class="field-label">Firma Digital (Opcional - Recomendado PNG)</span>
+            
+            <div class="file-upload-zone" [class.has-file]="signatureBase64() !== null">
+              <input type="file" class="file-input-hidden" accept=".png,.jpg,.jpeg" (change)="onFileSelected($event)" #fileInput />
+              
+              @if (!signatureBase64()) {
+                <div class="file-upload-placeholder">
+                  <svg lucideUploadCloud class="upload-icon" style="width: 48px; height: 48px; stroke-width: 1.5;"></svg>
+                  <span class="upload-text">Haz clic o arrastra la firma aquí</span>
+                  <span class="upload-hint">Solo PNG o JPG, tamaño máximo recomendado: 2MB</span>
+                </div>
+              } @else {
+                <div class="signature-preview-container">
+                  <div class="preview-header">
+                    <svg lucideImage style="width: 20px; height: 20px;"></svg>
+                    <span>Firma cargada exitosamente</span>
+                    <button type="button" class="btn-remove-file" (click)="removeSignature()">
+                      <svg lucideTrash2 style="width: 18px; height: 18px;"></svg>
+                    </button>
+                  </div>
+                  <div class="preview-image-box">
+                    <img [src]="signatureBase64()" alt="Firma" class="signature-img" />
+                  </div>
+                </div>
+              }
+            </div>
+
+            <style>
+              .file-upload-zone {
+                position: relative;
+                width: 100%;
+                min-height: 140px;
+                border: 2px dashed #cbd5e1;
+                border-radius: 12px;
+                background-color: #f8fafc;
+                transition: all 0.2s ease-in-out;
+                cursor: pointer;
+                overflow: hidden;
+                margin-top: 8px;
+              }
+              .file-upload-zone:hover {
+                border-color: #3b82f6;
+                background-color: #eff6ff;
+              }
+              .file-upload-zone.has-file {
+                border-style: solid;
+                border-color: #e2e8f0;
+                background-color: #ffffff;
+                cursor: default;
+              }
+              .file-input-hidden {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                opacity: 0;
+                cursor: pointer;
+                z-index: 10;
+              }
+              .file-upload-zone.has-file .file-input-hidden {
+                display: none;
+              }
+              .file-upload-placeholder {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                min-height: 140px;
+                padding: 24px;
+                color: #64748b;
+              }
+              .upload-icon {
+                color: #94a3b8;
+                margin-bottom: 12px;
+                transition: color 0.2s;
+              }
+              .file-upload-zone:hover .upload-icon {
+                color: #3b82f6;
+              }
+              .upload-text {
+                font-weight: 600;
+                color: #334155;
+                font-size: 15px;
+                margin-bottom: 4px;
+              }
+              .upload-hint {
+                font-size: 13px;
+                color: #94a3b8;
+              }
+              .signature-preview-container {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+              }
+              .preview-header {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 12px 16px;
+                background-color: #f1f5f9;
+                border-bottom: 1px solid #e2e8f0;
+                color: #0f172a;
+                font-weight: 500;
+                font-size: 14px;
+                position: relative;
+                z-index: 20;
+              }
+              .btn-remove-file {
+                margin-left: auto;
+                background: none;
+                border: none;
+                color: #ef4444;
+                cursor: pointer;
+                padding: 6px;
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.2s;
+              }
+              .btn-remove-file:hover {
+                background-color: #fee2e2;
+              }
+              .preview-image-box {
+                padding: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: repeating-conic-gradient(#f8fafc 0% 25%, transparent 0% 50%) 50% / 20px 20px;
+                min-height: 100px;
+              }
+              .signature-img {
+                max-height: 100px;
+                max-width: 100%;
+                object-fit: contain;
+                filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+              }
+            </style>
           </label>
         </div>
       </section>

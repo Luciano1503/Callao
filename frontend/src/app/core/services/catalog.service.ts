@@ -41,4 +41,16 @@ export class CatalogService {
       .get<VeedorCriteriosCatalog>(`/catalogos/veedores/${tipoVeedor}/criterios`)
       .pipe(map((response) => response.data));
   }
+
+  getFirmasRoles(): Observable<{ [key: string]: string }> {
+    return this.api
+      .get<{ [key: string]: string }>('/catalogos/firmas-roles')
+      .pipe(map((response) => response.data));
+  }
+
+  getFirmasGrupo(groupId: number): Observable<{ [key: string]: string }> {
+    return this.api
+      .get<{ [key: string]: string }>(`/catalogos/firmas-grupo/${groupId}`)
+      .pipe(map((response) => response.data));
+  }
 }

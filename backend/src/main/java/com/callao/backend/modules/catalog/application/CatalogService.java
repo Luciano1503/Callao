@@ -69,6 +69,14 @@ public class CatalogService {
 		);
 	}
 
+	public java.util.Map<String, String> getFirmasRoles() {
+		return catalogRepository.getFirmasRoles();
+	}
+
+	public java.util.Map<String, String> getFirmasGrupo(Long groupId) {
+		return catalogRepository.getFirmasGrupo(groupId);
+	}
+
 	private String normalizeCode(String value) {
 		return value == null ? "" : value.trim().replace('-', '_').toUpperCase();
 	}
