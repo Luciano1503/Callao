@@ -38,6 +38,7 @@ export interface EvaluatedGroupSummary {
   estado: string;
   totalEvaluados: number;
   registradoEn: string;
+  veedorFinalizado?: boolean;
 }
 
 export interface SupervisorConsulta {
@@ -45,6 +46,7 @@ export interface SupervisorConsulta {
   grupoId: number;
   numeroGrupo: number;
   colorNombre: string;
+  colorHex: string;
   dni: string;
   nombres: string;
   placa: string | null;

@@ -13,7 +13,7 @@ public record ChangePasswordRequest(
 
 	@NotBlank(message = "La contrasena nueva es obligatoria.")
 	@Size(min = 8, max = 72, message = "La contrasena nueva debe tener entre 8 y 72 caracteres.")
-	@jakarta.validation.constraints.Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$", message = "La contraseña debe tener al menos una letra mayúscula, una letra minúscula y un número.")
+	@jakarta.validation.constraints.Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!_\\-]).{8,}$", message = "La contraseña debe contener al menos una letra mayúscula, minúscula, carácter especial y números.")
 	String newPassword,
 
 	@NotBlank(message = "La confirmacion de contrasena es obligatoria.")

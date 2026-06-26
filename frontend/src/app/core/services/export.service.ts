@@ -39,85 +39,90 @@ export class ExportService {
     const firmasMap = { ...firmasRoles, ...firmasGrupo };
     const firmas = await this.loadSignatures(firmasMap);
 
-    const doc = new jsPDF('p', 'mm', 'a4');
+    const doc = new jsPDF('l', 'mm', 'a5');
     
     // --- PAGE 1: RELACIÓN DE EVALUADOS (Resumen General) ---
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     
-    doc.rect(10, 10, 190, 40); 
-    doc.text('RELACIÓN DE EVALUADOS', 105, 18, { align: 'center' });
-
-    doc.setFontSize(14);
-    doc.setTextColor(200, 0, 0);
-    doc.text(`Nº ${String(detail.grupo.numeroGrupo).padStart(6, '0')}`, 175, 18, { align: 'center' });
-    doc.setTextColor(0, 0, 0);
+    doc.rect(10, 5, 190, 25); 
+    doc.text('RELACIÓN DE EVALUADOS', 105, 12, { align: 'center' });
 
     doc.setFontSize(12);
-    doc.text('GRUPO', 20, 30);
-    doc.rect(40, 20, 25, 20); 
-    doc.setFontSize(20);
-    doc.text(detail.grupo.numeroGrupo.toString(), 52.5, 34, { align: 'center' });
+    doc.text(`Nº ${String(detail.grupo.numeroGrupo).padStart(6, '0')}`, 175, 12, { align: 'center' });
 
     doc.setFontSize(10);
+    doc.text('GRUPO', 20, 18);
+    doc.rect(40, 10, 20, 15); 
+    doc.setFontSize(16);
+    doc.text(detail.grupo.numeroGrupo.toString(), 50, 20, { align: 'center' });
+
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text('FECHA:', 140, 25);
-    doc.text('HORA:', 140, 32);
-    doc.text('COLOR:', 140, 39);
+    doc.text('FECHA:', 140, 17);
+    doc.text('HORA:', 140, 22);
+    doc.text('COLOR:', 140, 27);
 
     doc.setFont('helvetica', 'normal');
-    doc.line(155, 26, 195, 26);
-    doc.line(155, 33, 195, 33);
-    doc.line(155, 40, 195, 40);
+    doc.line(155, 18, 195, 18);
+    doc.line(155, 23, 195, 23);
+    doc.line(155, 28, 195, 28);
 
     const dateObj = new Date(detail.grupo.registradoEn);
-    const dateStr = new Intl.DateTimeFormat('es-PE', { day: '2-digit', month: '2-digit', year: '2-digit' }).format(dateObj);
-    const timeStr = new Intl.DateTimeFormat('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false }).format(dateObj);
+    const dateStr = new Intl.DateTimeFormat('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(dateObj);
+    const timeStr = new Intl.DateTimeFormat('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true }).format(dateObj);
     
-    doc.text(dateStr, 175, 25, { align: 'center' });
-    doc.text(timeStr, 175, 32, { align: 'center' });
-    doc.text(detail.grupo.colorNombre, 175, 39, { align: 'center' });
+    doc.text(dateStr, 175, 17, { align: 'center' });
+    doc.text(timeStr, 175, 22, { align: 'center' });
+    doc.text(detail.grupo.colorNombre, 175, 27, { align: 'center' });
 
     let imgData: string | null = null;
     try {
       imgData = await this.loadImage(this.LOGO_PATH);
-      doc.addImage(imgData, 'JPEG', 85, 22, 30, 25);
+      doc.addImage(imgData, 'JPEG', 90, 13, 15, 15);
     } catch (e) {
       console.warn('No se pudo cargar el logo', e);
       doc.setFontSize(8);
-      doc.text('GOBIERNO', 100, 30, { align: 'center' });
-      doc.text('REGIONAL', 100, 34, { align: 'center' });
-      doc.text('DEL CALLAO', 100, 38, { align: 'center' });
+      doc.text('GOBIERNO', 100, 18, { align: 'center' });
+      doc.text('REGIONAL', 100, 22, { align: 'center' });
+      doc.text('DEL CALLAO', 100, 26, { align: 'center' });
     }
 
-    const tableBodyGeneral = detail.evaluados.map((person) => {
-      let letter = '';
-      if (person.resultadoFinal === 'APROBADO') letter = 'A';
-      if (person.resultadoFinal === 'DESAPROBADO') letter = 'D';
+    const tableBodyGeneral = [];
+    for (let r = 1; r <= 10; r++) {
+      const person = detail.evaluados.find(p => p.numeroFila === r);
+      if (person) {
+        let letter = '';
+        if (person.resultadoFinal === 'APROBADO') letter = 'A';
+        if (person.resultadoFinal === 'DESAPROBADO') letter = 'D';
 
-      return [
-        person.numeroFila.toString(),
-        person.nombres,
-        person.numeroFila.toString(),
-        person.dni,
-        person.categoriaCodigo,
-        person.placa || '',
-        letter
-      ];
-    });
+        tableBodyGeneral.push([
+          person.numeroFila.toString(),
+          person.nombres,
+          person.numeroFila.toString(),
+          person.dni,
+          person.categoriaCodigo,
+          person.placa || '',
+          letter
+        ]);
+      } else {
+        tableBodyGeneral.push([r.toString(), '', r.toString(), '', '', '', '']);
+      }
+    }
 
     autoTable(doc, {
-      startY: 50,
+      startY: 32,
       head: [['N°', 'APELLIDOS Y NOMBRES', 'N°', 'D.N.I', 'CATEGORIA', 'PLACA', '']],
       body: tableBodyGeneral,
       theme: 'grid',
       styles: {
-        fontSize: 10,
+        fontSize: 9,
         font: 'helvetica',
-        cellPadding: 2,
+        cellPadding: 1,
         lineColor: [0, 0, 0],
         lineWidth: 0.5,
-        textColor: [0, 0, 0]
+        textColor: [0, 0, 0],
+        minCellHeight: 6
       },
       headStyles: {
         fillColor: [240, 240, 240],
@@ -131,51 +136,47 @@ export class ExportService {
         2: { halign: 'center', cellWidth: 10 },
         3: { halign: 'center', cellWidth: 25 },
         4: { halign: 'center', cellWidth: 25 },
-        5: { halign: 'center', cellWidth: 25 },
-        6: { halign: 'center', cellWidth: 10, fontStyle: 'bold', textColor: [0, 51, 153] }
+        5: { halign: 'center', cellWidth: 20 },
+        6: { halign: 'center', cellWidth: 10, fontStyle: 'bold', textColor: [0, 0, 0] }
       },
-      margin: { top: 50, left: 10, right: 10 }
+      margin: { top: 32, left: 10, right: 10 }
     });
 
-    let finalY = (doc as any).lastAutoTable.finalY || 50;
+    let finalY = (doc as any).lastAutoTable.finalY || 105;
 
-    const footerStartY = finalY + 10;
+    const footerStartY = finalY + 2;
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.rect(10, footerStartY, 190, 40);
+    doc.rect(10, footerStartY, 190, 15);
     doc.text('Observaciones:', 12, footerStartY + 5);
     
     if (detail.grupo.observaciones) {
       doc.setFont('helvetica', 'italic');
-      doc.setTextColor(0, 51, 153);
+      doc.setTextColor(0, 0, 0);
       const obs = detail.grupo.observaciones;
-      doc.text(obs.substring(0, 105), 12, footerStartY + 12);
+      doc.text(obs.substring(0, 105), 12, footerStartY + 10);
       if (obs.length > 105) {
-        doc.text(obs.substring(105, 210), 12, footerStartY + 18);
-      }
-      if (obs.length > 210) {
-        doc.text(obs.substring(210, 315), 12, footerStartY + 24);
+        doc.text(obs.substring(105, 210), 12, footerStartY + 14);
       }
     }
 
     const sigY = footerStartY + 30;
     doc.line(20, sigY, 60, sigY);
-    if (firmas['EVALUADOR_CIRCUITO']) doc.addImage(firmas['EVALUADOR_CIRCUITO'], 'JPEG', 25, sigY - 18, 30, 15);
+    if (firmas['EVALUADOR_CIRCUITO']) doc.addImage(firmas['EVALUADOR_CIRCUITO'], 'JPEG', 25, sigY - 14, 25, 12);
 
     doc.line(75, sigY, 135, sigY);
-    if (firmas['ADMIN']) doc.addImage(firmas['ADMIN'], 'JPEG', 90, sigY - 18, 30, 15);
+    if (firmas['ADMIN']) doc.addImage(firmas['ADMIN'], 'JPEG', 90, sigY - 14, 25, 12);
 
     doc.line(150, sigY, 190, sigY);
-    if (firmas['SUPERVISOR_EVALUADOS']) doc.addImage(firmas['SUPERVISOR_EVALUADOS'], 'JPEG', 155, sigY - 18, 30, 15);
+    if (firmas['SUPERVISOR_EVALUADOS']) doc.addImage(firmas['SUPERVISOR_EVALUADOS'], 'JPEG', 155, sigY - 14, 25, 12);
 
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('Evaluador', 40, sigY + 5, { align: 'center' });
+    doc.text('Evaluador', 40, sigY + 4, { align: 'center' });
     
-    doc.text('GOBIERNO REGIONAL DEL CALLAO', 105, sigY + 3, { align: 'center' });
-    doc.text('Coordinador', 105, sigY + 8, { align: 'center' });
+    doc.text('Coordinador', 105, sigY + 4, { align: 'center' });
     
-    doc.text('Supervisor', 170, sigY + 5, { align: 'center' });
+    doc.text('Supervisor', 170, sigY + 4, { align: 'center' });
 
     // --- PÁGINAS 2 a 5: ACTAS DE VEEDORES ---
     const veedorTypes = [
@@ -191,68 +192,68 @@ export class ExportService {
       const veedor = veedorTypes[i];
 
       if (imgData) {
-        doc.addImage(imgData, 'JPEG', 15, 10, 30, 35);
+        doc.addImage(imgData, 'JPEG', 15, 4, 14, 14);
       } else {
         doc.setFontSize(8);
-        doc.text('LOGO', 30, 25, { align: 'center' });
+        doc.text('LOGO', 22, 11, { align: 'center' });
       }
 
       // Headers
-      doc.setFontSize(14);
+      doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text('GOBIERNO REGIONAL DEL CALLAO', 115, 15, { align: 'center' });
-      
-      doc.setFontSize(12);
-      doc.text('Gerencia Regional de Transportes y Comunicaciones', 115, 22, { align: 'center' });
-      
-      doc.setFontSize(12);
-      doc.text('Unidad de Licencias', 115, 29, { align: 'center' });
-
-      doc.setFontSize(16);
-      doc.text('EXAMEN DE MANEJO', 85, 42, { align: 'center' });
-
-      doc.setFontSize(16);
-      doc.setTextColor(200, 0, 0);
-      doc.text(`Nº ${String(detail.grupo.numeroGrupo).padStart(6, '0')}`, 130, 42);
-      doc.setTextColor(0, 0, 0);
+      doc.text('GOBIERNO REGIONAL DEL CALLAO', 115, 8, { align: 'center' });
       
       doc.setFontSize(10);
+      doc.text('Gerencia Regional de Transportes y Comunicaciones', 115, 12, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.text('Unidad de Licencias', 115, 16, { align: 'center' });
+
+      doc.setFontSize(14);
+      doc.text('EXAMEN DE MANEJO', 85, 23, { align: 'center' });
+
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Nº ${String(detail.grupo.numeroGrupo).padStart(6, '0')}`, 130, 23);
+      doc.setTextColor(0, 0, 0);
+      
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       
-      doc.rect(15, 50, 20, 8);
-      doc.text('Posición:', 17, 55);
-      doc.rect(35, 50, 70, 8);
-      doc.text(veedor.nombre, 37, 55);
+      doc.rect(15, 26, 18, 5);
+      doc.text('Posición:', 17, 30);
+      doc.rect(33, 26, 60, 5);
+      doc.text(veedor.nombre, 35, 30);
       
-      doc.rect(130, 50, 15, 8);
-      doc.text('Hora:', 132, 55);
-      doc.rect(145, 50, 50, 8);
+      doc.rect(130, 26, 12, 5);
+      doc.text('Hora:', 132, 30);
+      doc.rect(142, 26, 40, 5);
       
       doc.setFont('helvetica', 'italic');
-      doc.setTextColor(0, 51, 153);
-      doc.text(timeStr, 155, 55);
+      doc.setTextColor(0, 0, 0);
+      doc.text(timeStr, 148, 30);
       
       doc.setTextColor(0, 0, 0);
       doc.setFont('helvetica', 'normal');
 
-      doc.rect(15, 60, 20, 8);
-      doc.text('Grupo:', 17, 65);
-      doc.rect(35, 60, 50, 8);
+      doc.rect(15, 31, 18, 5);
+      doc.text('Grupo:', 17, 35);
+      doc.rect(33, 31, 60, 5);
       
       doc.setFont('helvetica', 'italic');
-      doc.setTextColor(0, 51, 153);
-      doc.text(`${detail.grupo.numeroGrupo} ${detail.grupo.colorNombre}`, 45, 65);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`${detail.grupo.numeroGrupo} ${detail.grupo.colorNombre}`, 35, 35);
       
       doc.setTextColor(0, 0, 0);
       doc.setFont('helvetica', 'normal');
       
-      doc.rect(130, 60, 15, 8);
-      doc.text('Fecha:', 132, 65);
-      doc.rect(145, 60, 50, 8);
+      doc.rect(130, 31, 12, 5);
+      doc.text('Fecha:', 132, 35);
+      doc.rect(142, 31, 40, 5);
       
       doc.setFont('helvetica', 'italic');
-      doc.setTextColor(0, 51, 153);
-      doc.text(dateStr, 155, 65);
+      doc.setTextColor(0, 0, 0);
+      doc.text(dateStr, 148, 35);
       
       doc.setTextColor(0, 0, 0);
       doc.setFont('helvetica', 'normal');
@@ -281,25 +282,25 @@ export class ExportService {
         tableBody.push([
           r.toString(), 
           cat, 
-          habsIsRed ? { content: habsStr, styles: { textColor: [220, 38, 38] as [number, number, number] } } : habsStr, 
-          regsIsRed ? { content: regsStr, styles: { textColor: [220, 38, 38] as [number, number, number] } } : regsStr
+          habsIsRed ? { content: habsStr, styles: { textColor: [0, 0, 0] as [number, number, number] } } : habsStr, 
+          regsIsRed ? { content: regsStr, styles: { textColor: [0, 0, 0] as [number, number, number] } } : regsStr
         ]);
       }
 
       autoTable(doc, {
-        startY: 75,
+        startY: 38,
         head: [['Nª', 'CAT', 'HABILIDAD', 'REGLAMENTO']],
         body: tableBody,
         theme: 'grid',
         styles: {
-          fontSize: 14,
+          fontSize: 9,
           font: 'helvetica',
-          cellPadding: 4,
+          cellPadding: 1,
           lineColor: [0, 0, 0],
           lineWidth: 0.5,
-          textColor: [0, 51, 153],
+          textColor: [0, 0, 0],
           fontStyle: 'italic',
-          minCellHeight: 12
+          minCellHeight: 6
         },
         headStyles: {
           fillColor: [230, 230, 230],
@@ -307,59 +308,55 @@ export class ExportService {
           fontStyle: 'bold',
           halign: 'center',
           valign: 'middle',
-          fontSize: 10
+          fontSize: 9
         },
         columnStyles: {
-          0: { halign: 'center', cellWidth: 15, textColor: [0, 0, 0], fontStyle: 'bold' },
-          1: { halign: 'center', cellWidth: 20 },
+          0: { halign: 'center', cellWidth: 10, textColor: [0, 0, 0], fontStyle: 'bold' },
+          1: { halign: 'center', cellWidth: 15 },
           2: { halign: 'left', cellWidth: 80 },
-          3: { halign: 'left', cellWidth: 65 }
+          3: { halign: 'left', cellWidth: 75 }
         },
         margin: { left: 15, right: 15 }
       });
 
-      finalY = (doc as any).lastAutoTable.finalY || 75;
+      finalY = (doc as any).lastAutoTable.finalY || 105;
 
       doc.setTextColor(0, 0, 0);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       
-      doc.rect(15, finalY, 180, 25);
-      doc.text('Observaciones:', 17, finalY + 5);
+      doc.rect(15, finalY + 2, 180, 12);
+      doc.text('Observaciones:', 17, finalY + 6);
       
       const veedorObs = detail.observacionesVeedores && detail.observacionesVeedores[veedor.codigo];
       if (veedorObs) {
         doc.setFont('helvetica', 'italic');
-        doc.setTextColor(0, 51, 153);
-        doc.text(veedorObs.substring(0, 100), 17, finalY + 12);
+        doc.setTextColor(0, 0, 0);
+        doc.text(veedorObs.substring(0, 100), 17, finalY + 10);
         if (veedorObs.length > 100) {
-          doc.text(veedorObs.substring(100, 200), 17, finalY + 17);
+          doc.text(veedorObs.substring(100, 200), 17, finalY + 13);
         }
       }
 
-      const sigActaY = finalY + 45;
+      const sigActaY = finalY + 30;
       
       doc.line(15, sigActaY, 55, sigActaY);
       const veedorKey = `VEEDOR_${veedor.codigo}`;
-      if (firmas[veedorKey]) doc.addImage(firmas[veedorKey], 'JPEG', 20, sigActaY - 18, 30, 15);
-      doc.text('Evaluador', 35, sigActaY + 5, { align: 'center' });
+      if (firmas[veedorKey]) doc.addImage(firmas[veedorKey], 'JPEG', 20, sigActaY - 14, 25, 12);
+      doc.text('Evaluador', 35, sigActaY + 4, { align: 'center' });
       
       doc.line(75, sigActaY, 135, sigActaY);
-      if (firmas['ADMIN']) doc.addImage(firmas['ADMIN'], 'JPEG', 90, sigActaY - 18, 30, 15);
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text('GOBIERNO REGIONAL DEL CALLAO', 105, sigActaY - 6, { align: 'center' });
-      doc.text('RENE JAVIER MAMANI NUÑONCA', 105, sigActaY - 2, { align: 'center' });
+      if (firmas['ADMIN']) doc.addImage(firmas['ADMIN'], 'JPEG', 90, sigActaY - 14, 25, 12);
       
       doc.setTextColor(0, 0, 0);
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
-      doc.text('Coordinador', 105, sigActaY + 5, { align: 'center' });
+      doc.text('Coordinador', 105, sigActaY + 4, { align: 'center' });
       
       doc.setFont('helvetica', 'normal');
       doc.line(155, sigActaY, 195, sigActaY);
-      if (firmas['SUPERVISOR_EVALUADOS']) doc.addImage(firmas['SUPERVISOR_EVALUADOS'], 'JPEG', 160, sigActaY - 18, 30, 15);
-      doc.text('Supervisor', 175, sigActaY + 5, { align: 'center' });
+      if (firmas['SUPERVISOR_EVALUADOS']) doc.addImage(firmas['SUPERVISOR_EVALUADOS'], 'JPEG', 160, sigActaY - 14, 25, 12);
+      doc.text('Supervisor', 175, sigActaY + 4, { align: 'center' });
     }
 
     doc.save(`Grupo_${detail.grupo.numeroGrupo}_Evaluados_Completo.pdf`);
@@ -375,7 +372,7 @@ export class ExportService {
     const firmasMap = { ...firmasRoles, ...firmasGrupo };
     const firmas = await this.loadSignatures(firmasMap);
 
-    const doc = new jsPDF('p', 'mm', 'a4');
+    const doc = new jsPDF('l', 'mm', 'a5');
     
     let imgData: string | null = null;
     try {
@@ -385,72 +382,72 @@ export class ExportService {
     }
 
     if (imgData) {
-      doc.addImage(imgData, 'JPEG', 15, 10, 30, 35);
+      doc.addImage(imgData, 'JPEG', 15, 4, 14, 14);
     } else {
       doc.setFontSize(8);
-      doc.text('LOGO', 30, 25, { align: 'center' });
+      doc.text('LOGO', 22, 11, { align: 'center' });
     }
 
     // Headers
-    doc.setFontSize(14);
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('GOBIERNO REGIONAL DEL CALLAO', 115, 15, { align: 'center' });
-    
-    doc.setFontSize(12);
-    doc.text('Gerencia Regional de Transportes y Comunicaciones', 115, 22, { align: 'center' });
-    
-    doc.setFontSize(12);
-    doc.text('Unidad de Licencias', 115, 29, { align: 'center' });
-
-    doc.setFontSize(16);
-    doc.text('EXAMEN DE MANEJO', 85, 42, { align: 'center' });
-
-    doc.setFontSize(16);
-    doc.setTextColor(200, 0, 0);
-    doc.text(`Nº ${String(sheet.numeroGrupo).padStart(6, '0')}`, 130, 42);
-    doc.setTextColor(0, 0, 0);
+    doc.text('GOBIERNO REGIONAL DEL CALLAO', 115, 8, { align: 'center' });
     
     doc.setFontSize(10);
+    doc.text('Gerencia Regional de Transportes y Comunicaciones', 115, 12, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.text('Unidad de Licencias', 115, 16, { align: 'center' });
+
+    doc.setFontSize(14);
+    doc.text('EXAMEN DE MANEJO', 85, 23, { align: 'center' });
+
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Nº ${String(sheet.numeroGrupo).padStart(6, '0')}`, 130, 23);
+    doc.setTextColor(0, 0, 0);
+    
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     
-    doc.rect(15, 50, 20, 8);
-    doc.text('Posición:', 17, 55);
-    doc.rect(35, 50, 70, 8);
-    doc.text(sheet.tipoVeedorNombre, 37, 55);
+    doc.rect(15, 26, 18, 5);
+    doc.text('Posición:', 17, 30);
+    doc.rect(33, 26, 60, 5);
+    doc.text(sheet.tipoVeedorNombre, 35, 30);
     
-    doc.rect(130, 50, 15, 8);
-    doc.text('Hora:', 132, 55);
-    doc.rect(145, 50, 50, 8);
+    doc.rect(130, 26, 12, 5);
+    doc.text('Hora:', 132, 30);
+    doc.rect(142, 26, 40, 5);
     
     const dateObj = new Date(sheet.registradoEn);
-    const dateStr = new Intl.DateTimeFormat('es-PE', { day: '2-digit', month: '2-digit', year: '2-digit' }).format(dateObj);
-    const timeStr = new Intl.DateTimeFormat('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false }).format(dateObj);
+    const dateStr = new Intl.DateTimeFormat('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(dateObj);
+    const timeStr = new Intl.DateTimeFormat('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true }).format(dateObj);
     
     doc.setFont('helvetica', 'italic');
-    doc.setTextColor(0, 51, 153);
-    doc.text(timeStr, 155, 55);
+    doc.setTextColor(0, 0, 0);
+    doc.text(timeStr, 148, 30);
     
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
 
-    doc.rect(15, 60, 20, 8);
-    doc.text('Grupo:', 17, 65);
-    doc.rect(35, 60, 50, 8);
+    doc.rect(15, 31, 18, 5);
+    doc.text('Grupo:', 17, 35);
+    doc.rect(33, 31, 60, 5);
     
     doc.setFont('helvetica', 'italic');
-    doc.setTextColor(0, 51, 153);
-    doc.text(`${sheet.numeroGrupo} ${sheet.colorNombre}`, 45, 65);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`${sheet.numeroGrupo} ${sheet.colorNombre}`, 35, 35);
     
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
     
-    doc.rect(130, 60, 15, 8);
-    doc.text('Fecha:', 132, 65);
-    doc.rect(145, 60, 50, 8);
+    doc.rect(130, 31, 12, 5);
+    doc.text('Fecha:', 132, 35);
+    doc.rect(142, 31, 40, 5);
     
     doc.setFont('helvetica', 'italic');
-    doc.setTextColor(0, 51, 153);
-    doc.text(dateStr, 155, 65);
+    doc.setTextColor(0, 0, 0);
+    doc.text(dateStr, 148, 35);
     
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
@@ -486,25 +483,25 @@ export class ExportService {
       tableBody.push([
         r.toString(), 
         cat, 
-        habsIsRed ? { content: habsStr, styles: { textColor: [220, 38, 38] as [number, number, number] } } : habsStr, 
-        regsIsRed ? { content: regsStr, styles: { textColor: [220, 38, 38] as [number, number, number] } } : regsStr
+        habsIsRed ? { content: habsStr, styles: { textColor: [0, 0, 0] as [number, number, number] } } : habsStr, 
+        regsIsRed ? { content: regsStr, styles: { textColor: [0, 0, 0] as [number, number, number] } } : regsStr
       ]);
     }
 
     autoTable(doc, {
-      startY: 75,
+      startY: 38,
       head: [['Nª', 'CAT', 'HABILIDAD', 'REGLAMENTO']],
       body: tableBody,
       theme: 'grid',
       styles: {
-        fontSize: 14,
+        fontSize: 9,
         font: 'helvetica',
-        cellPadding: 4,
+        cellPadding: 1,
         lineColor: [0, 0, 0],
         lineWidth: 0.5,
-        textColor: [0, 51, 153],
+        textColor: [0, 0, 0],
         fontStyle: 'italic',
-        minCellHeight: 12
+        minCellHeight: 6
       },
       headStyles: {
         fillColor: [230, 230, 230],
@@ -512,60 +509,56 @@ export class ExportService {
         fontStyle: 'bold',
         halign: 'center',
         valign: 'middle',
-        fontSize: 10
+        fontSize: 9
       },
       columnStyles: {
-        0: { halign: 'center', cellWidth: 15, textColor: [0, 0, 0], fontStyle: 'bold' },
-        1: { halign: 'center', cellWidth: 20 },
+        0: { halign: 'center', cellWidth: 10, textColor: [0, 0, 0], fontStyle: 'bold' },
+        1: { halign: 'center', cellWidth: 15 },
         2: { halign: 'left', cellWidth: 80 },
-        3: { halign: 'left', cellWidth: 65 }
+        3: { halign: 'left', cellWidth: 75 }
       },
       margin: { left: 15, right: 15 }
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY || 75;
+    const finalY = (doc as any).lastAutoTable.finalY || 105;
 
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     
-    doc.rect(15, finalY, 180, 25);
-    doc.text('Observaciones:', 17, finalY + 5);
+    doc.rect(15, finalY + 2, 180, 12);
+    doc.text('Observaciones:', 17, finalY + 6);
     
     if (sheet.observaciones) {
       doc.setFont('helvetica', 'italic');
-      doc.setTextColor(0, 51, 153);
-      doc.text(sheet.observaciones.substring(0, 100), 17, finalY + 12);
+      doc.setTextColor(0, 0, 0);
+      doc.text(sheet.observaciones.substring(0, 100), 17, finalY + 10);
       if (sheet.observaciones.length > 100) {
-        doc.text(sheet.observaciones.substring(100, 200), 17, finalY + 17);
+        doc.text(sheet.observaciones.substring(100, 200), 17, finalY + 13);
       }
     }
 
-    const sigActaY = finalY + 45;
+    const sigActaY = finalY + 30;
     
     doc.line(15, sigActaY, 55, sigActaY);
     const veedorKey = `VEEDOR_${sheet.tipoVeedorCodigo}`;
-    if (firmas[veedorKey]) doc.addImage(firmas[veedorKey], 'JPEG', 20, sigActaY - 18, 30, 15);
+    if (firmas[veedorKey]) doc.addImage(firmas[veedorKey], 'JPEG', 20, sigActaY - 14, 25, 12);
     doc.setTextColor(0, 0, 0);
     doc.setFont('helvetica', 'normal');
-    doc.text('Evaluador', 35, sigActaY + 5, { align: 'center' });
+    doc.text('Evaluador', 35, sigActaY + 4, { align: 'center' });
     
     doc.line(75, sigActaY, 135, sigActaY);
-    if (firmas['ADMIN']) doc.addImage(firmas['ADMIN'], 'JPEG', 90, sigActaY - 18, 30, 15);
-    doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    doc.text('GOBIERNO REGIONAL DEL CALLAO', 105, sigActaY - 6, { align: 'center' });
-    doc.text('RENE JAVIER MAMANI NUÑONCA', 105, sigActaY - 2, { align: 'center' });
+    if (firmas['ADMIN']) doc.addImage(firmas['ADMIN'], 'JPEG', 90, sigActaY - 14, 25, 12);
     
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text('Coordinador', 105, sigActaY + 5, { align: 'center' });
+    doc.text('Coordinador', 105, sigActaY + 4, { align: 'center' });
     
     doc.setFont('helvetica', 'normal');
     doc.line(155, sigActaY, 195, sigActaY);
-    if (firmas['SUPERVISOR_EVALUADOS']) doc.addImage(firmas['SUPERVISOR_EVALUADOS'], 'JPEG', 160, sigActaY - 18, 30, 15);
-    doc.text('Supervisor', 175, sigActaY + 5, { align: 'center' });
+    if (firmas['SUPERVISOR_EVALUADOS']) doc.addImage(firmas['SUPERVISOR_EVALUADOS'], 'JPEG', 160, sigActaY - 14, 25, 12);
+    doc.text('Supervisor', 175, sigActaY + 4, { align: 'center' });
 
     doc.save(`Grupo_${sheet.numeroGrupo}_Acta_${sheet.tipoVeedorCodigo}.pdf`);
   }

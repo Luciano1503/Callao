@@ -57,7 +57,7 @@ public class CatalogRepository {
 			SELECT id, nombre, codigo_hex
 			FROM callao.colores_grupo
 			WHERE activo = TRUE
-			ORDER BY id
+			ORDER BY CASE nombre WHEN 'Amarillo' THEN 1 WHEN 'Rojo' THEN 2 WHEN 'Azul' THEN 3 ELSE 4 END, id ASC
 			""",
 			(rs, rowNum) -> new ColorCatalogResponse(
 				rs.getLong("id"),

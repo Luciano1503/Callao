@@ -115,7 +115,10 @@ public class EvaluatorCircuitService {
 	}
 
 	private void ensureEditable(EvaluatorSheetSummaryResponse sheet) {
-		if (FINALIZED_STATUS.equals(sheet.estadoGrupo())) {
+		org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+		boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+		if (!isAdmin && FINALIZED_STATUS.equals(sheet.estadoGrupo())) {
 			throw new BusinessException("La evaluacion ya fue finalizada por el administrador y no admite modificaciones.");
 		}
 	}

@@ -56,7 +56,7 @@
 
           <label class="field-group">
             <span class="field-label">Numero de celular</span>
-            <input class="field" name="celular" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" placeholder="Ej. 999888777" />
+            <input class="field" name="celular" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" placeholder="Ej. 999888777" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
           </label>
         </div>
 

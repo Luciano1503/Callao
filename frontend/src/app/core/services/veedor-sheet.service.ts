@@ -11,9 +11,9 @@ import { ApiService } from './api.service';
 export class VeedorSheetService {
   private readonly api = inject(ApiService);
 
-  getGroups(): Observable<EvaluatedGroupSummary[]> {
+  getGroups(tipoVeedor: string): Observable<EvaluatedGroupSummary[]> {
     return this.api
-      .get<EvaluatedGroupSummary[]>('/veedores/grupos')
+      .get<EvaluatedGroupSummary[]>(`/veedores/${encodeURIComponent(tipoVeedor)}/grupos`)
       .pipe(map((response) => response.data));
   }
 

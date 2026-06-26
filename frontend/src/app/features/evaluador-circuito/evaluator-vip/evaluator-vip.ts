@@ -96,7 +96,7 @@ export class EvaluatorVip implements OnInit, OnDestroy {
           groupsMap.get(sheet.grupoId)!.sheets.push(sheet);
         }
 
-        const groupsArray = Array.from(groupsMap.values()).sort((a, b) => b.numeroGrupo - a.numeroGrupo);
+        const groupsArray = Array.from(groupsMap.values()).sort((a, b) => a.numeroGrupo - b.numeroGrupo);
         this.groupedSheets.set(groupsArray);
 
 
@@ -118,26 +118,6 @@ export class EvaluatorVip implements OnInit, OnDestroy {
     } else {
       this.selectedGroupId.set(null);
     }
-  }
-
-  protected toggleVip(sheet: EvaluatorSheetSummary, event: Event): void {
-    const isChecked = (event.target as HTMLInputElement).checked;
-    const currentUser = this.authService.currentUser();
-
-    if (!currentUser) return;
-
-    this.evaluatorSheetService.toggleVip(sheet.evaluadoId, currentUser.usuarioId, isChecked).subscribe({
-      next: () => {
-        this.successMessage.set(`Estado VIP actualizado para ${sheet.nombres}.`);
-        this.loadSheets();
-        setTimeout(() => this.clearMessages(), 3000);
-      },
-      error: () => {
-        this.errorMessage.set('Error al actualizar estado VIP.');
-        // Revert check state visually
-        (event.target as HTMLInputElement).checked = !isChecked;
-      }
-    });
   }
 
   private clearMessages(): void {

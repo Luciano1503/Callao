@@ -18,6 +18,7 @@ import com.callao.backend.modules.supervisor_evaluados.infrastructure.Supervisor
 import com.callao.backend.shared.error.BusinessException;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
+import com.callao.backend.modules.evaluator_circuit.infrastructure.VipRegistryRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -28,6 +29,7 @@ public class SupervisorEvaluadosService {
 	private static final String DRAFT_STATUS = "BORRADOR";
 
 	private final SupervisorEvaluadosRepository repository;
+	private final VipRegistryRepository vipRegistryRepository;
 	private final SimpMessagingTemplate messagingTemplate;
 
 	@Transactional
@@ -57,15 +59,17 @@ public class SupervisorEvaluadosService {
 		validateSupervisor(supervisorId);
 
 		GroupRow latest = repository.findLatestGroupBySupervisor(supervisorId).orElse(null);
-		if (latest != null && DRAFT_STATUS.equals(latest.estado()) && repository.countEvaluated(latest.id()) < MAX_EVALUATED_BY_GROUP) {
-			throw new BusinessException("Complete los 10 evaluados del grupo actual antes de crear un nuevo grupo.");
+		if (latest != null && DRAFT_STATUS.equals(latest.estado())) {
+			throw new BusinessException("Finalice el grupo actual antes de crear un nuevo grupo.");
 		}
 
 		int nextGroupNumber = repository.getMaxGroupNumber() + 1;
-		Long colorId = request.colorId() == null ? resolveColorId(nextGroupNumber) : request.colorId();
+		Long colorId = resolveColorId(nextGroupNumber);
 		ensureActiveColor(colorId);
 		GroupRow created = repository.createGroup(nextGroupNumber, colorId, supervisorId);
-		return buildResponse(created.id());
+		EvaluatedGroupResponse response = buildResponse(created.id());
+		messagingTemplate.convertAndSend("/topic/veedores", response);
+		return response;
 	}
 
 	@Transactional
@@ -79,7 +83,9 @@ public class SupervisorEvaluadosService {
 		ensureDraft(group);
 
 		repository.updateGroupColor(groupId, supervisorId, request.colorId());
-		return buildResponse(groupId);
+		EvaluatedGroupResponse response = buildResponse(groupId);
+		messagingTemplate.convertAndSend("/topic/veedores", response);
+		return response;
 	}
 
 	@Transactional
@@ -96,7 +102,9 @@ public class SupervisorEvaluadosService {
 		ensureDraft(group);
 
 		repository.updateGroupRegistrationDate(groupId, supervisorId, request.registradoEn());
-		return buildResponse(groupId);
+		EvaluatedGroupResponse response = buildResponse(groupId);
+		messagingTemplate.convertAndSend("/topic/veedores", response);
+		return response;
 	}
 
 	@Transactional
@@ -133,13 +141,16 @@ public class SupervisorEvaluadosService {
 			}
 		}
 
+		boolean isVip = vipRegistryRepository.existsByDni(dni);
+
 		repository.createEvaluated(new CreateEvaluatedRow(
 			groupId,
 			currentTotal + 1,
 			dni,
 			clean(request.nombres()),
 			placaClean,
-			request.categoriaId()
+			request.categoriaId(),
+			isVip
 		));
 
 		EvaluatedGroupResponse response = buildResponse(groupId);
@@ -157,12 +168,14 @@ public class SupervisorEvaluadosService {
 		ensureDraft(group);
 
 		int currentTotal = repository.countEvaluated(groupId);
-		if (currentTotal != MAX_EVALUATED_BY_GROUP) {
-			throw new BusinessException("El grupo debe tener 10 evaluados antes de guardarse como finalizado.");
+		if (currentTotal == 0) {
+			throw new BusinessException("No se puede finalizar un grupo sin evaluados.");
 		}
 
 		repository.finalizeGroup(groupId, supervisorId, cleanNullable(request.observaciones()));
-		return buildResponse(groupId);
+		EvaluatedGroupResponse response = buildResponse(groupId);
+		messagingTemplate.convertAndSend("/topic/veedores", response);
+		return response;
 	}
 
 	private EvaluatedGroupResponse buildResponse(Long groupId) {

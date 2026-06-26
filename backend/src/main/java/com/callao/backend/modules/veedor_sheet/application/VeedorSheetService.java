@@ -29,14 +29,23 @@ public class VeedorSheetService {
 
 	private final VeedorSheetRepository repository;
 
-	public List<VeedorGroupSummaryResponse> findGroups() {
-		return repository.findGroups();
+	public List<VeedorGroupSummaryResponse> findGroups(String tipoVeedor) {
+		TipoVeedorRow tipo = findTipoVeedor(tipoVeedor);
+		org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+		Long loggedInUserId = (Long) auth.getPrincipal();
+		
+		return repository.findGroups(loggedInUserId, tipo.id());
 	}
 
 	public VeedorSheetResponse getCurrentSheet(String tipoVeedor) {
 		TipoVeedorRow tipo = findTipoVeedor(tipoVeedor);
-		GroupRow group = repository.findLatestGroup()
-			.orElseThrow(() -> new BusinessException("No existen grupos de evaluacion registrados."));
+		
+		org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+		Long loggedInUserId = (Long) auth.getPrincipal();
+
+		GroupRow group = repository.findPendingGroupForVeedor(loggedInUserId, tipo.id())
+			.orElseGet(() -> repository.findLatestGroup()
+				.orElseThrow(() -> new BusinessException("No existen grupos de evaluacion registrados.")));
 
 		return buildResponse(group, tipo);
 	}
@@ -59,9 +68,15 @@ public class VeedorSheetService {
 			throw new BusinessException("La evaluacion ya fue finalizada por el administrador.");
 		}
 
+		java.util.Optional<FichaRow> existingFicha = repository.findFicha(group.id(), tipo.id());
+		
 		org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
 		Long loggedInUserId = (Long) auth.getPrincipal();
 		boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+		if (existingFicha.isPresent() && FINALIZED_STATUS.equals(existingFicha.get().estado()) && !isAdmin) {
+			throw new BusinessException("La ficha ya se encuentra cerrada y no puede ser modificada.");
+		}
 
 		if (!isAdmin && !loggedInUserId.equals(request.veedorId())) {
 			throw new com.callao.backend.shared.error.BusinessException("No tienes permisos para realizar esta acción en nombre de otro usuario.");

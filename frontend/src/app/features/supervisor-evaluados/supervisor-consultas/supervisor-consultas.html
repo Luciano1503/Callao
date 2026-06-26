@@ -107,45 +107,56 @@
       </div>
 
       <div class="table-wrap">
-        <table class="data-table" style="width: 100%; table-layout: auto;">
-          <thead style="text-align: left;">
-            <tr>
-              <th style="padding: 12px 10px;">Grupo</th>
-              <th style="padding: 12px 10px;">DNI</th>
-              <th style="padding: 12px 10px;">Nombres y Apellidos</th>
-              <th style="padding: 12px 10px;">Categoria</th>
-              <th style="padding: 12px 10px;">Placa</th>
-              <th style="padding: 12px 10px;">Fecha Reg. Grupo</th>
-              <th style="padding: 12px 10px;">Estado Grupo</th>
-              <th style="padding: 12px 10px;">Resultado</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (person of filteredConsultas(); track person.id) {
+        @for (group of paginatedGroups(); track group.key) {
+          <div [style.background-color]="group.colorHex + '26'" style="padding: 12px 16px; border-radius: 8px 8px 0 0; border: 1px solid #e2e8f0; border-bottom: none; display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span class="color-dot" [title]="group.colorNombre" [style.background-color]="group.colorHex"></span>
+              <strong style="font-size: 16px;">Grupo {{ group.numeroGrupo }}</strong>
+              <span style="color: var(--text-2); font-size: 14px;">|</span>
+              <span style="color: var(--text-2); font-size: 14px;">Fecha de Registro: {{ formatDateTime(group.registradoEn) }}</span>
+            </div>
+            <span class="badge" [class.success]="group.estadoGrupo === 'FINALIZADO'" [class.warning]="group.estadoGrupo === 'BORRADOR'">{{ formatStatus(group.estadoGrupo) }}</span>
+          </div>
+          <table class="data-table" style="width: 100%; table-layout: auto; border: 1px solid #e2e8f0; border-top: none; margin-bottom: 0;">
+            <thead style="text-align: left; background: #fff;">
               <tr>
-                <td style="padding: 12px 10px;">
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="color-dot" [title]="person.colorNombre" style="background-color: #ccc;"></span>
-                    <span>Grupo {{ person.numeroGrupo }}</span>
-                  </div>
-                </td>
-                <td style="padding: 12px 10px;">{{ person.dni }}</td>
-                <td style="padding: 12px 10px;"><strong>{{ person.nombres }}</strong></td>
-                <td style="padding: 12px 10px;">{{ person.categoriaCodigo }}</td>
-                <td style="padding: 12px 10px;">{{ person.placa || '-' }}</td>
-                <td style="padding: 12px 10px;">{{ formatDateTime(person.registradoEn) }}</td>
-                <td style="padding: 12px 10px;">{{ formatStatus(person.estadoGrupo) }}</td>
-                <td style="padding: 12px 10px;"><span class="badge warning">{{ formatStatus(person.resultadoFinal) }}</span></td>
+                <th style="padding: 12px 10px;">DNI</th>
+                <th style="padding: 12px 10px;">Nombres y Apellidos</th>
+                <th style="padding: 12px 10px;">Categoria</th>
+                <th style="padding: 12px 10px;">Placa</th>
+                <th style="padding: 12px 10px;">Resultado</th>
               </tr>
-            } @empty {
-              <tr>
-                <td colspan="8" style="text-align: center; padding: 3rem 1rem; color: var(--text-2); font-weight: 500;">
-                  Utilice los filtros de arriba para buscar evaluados.
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (person of group.items; track person.id) {
+                <tr>
+                  <td style="padding: 12px 10px;">{{ person.dni }}</td>
+                  <td style="padding: 12px 10px;"><strong>{{ person.nombres }}</strong></td>
+                  <td style="padding: 12px 10px;">{{ person.categoriaCodigo }}</td>
+                  <td style="padding: 12px 10px;">{{ person.placa || '-' }}</td>
+                  <td style="padding: 12px 10px;"><span class="badge warning">{{ formatStatus(person.resultadoFinal) }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @empty {
+          <div style="text-align: center; padding: 3rem 1rem; color: var(--text-2); font-weight: 500; border: 1px dashed #e2e8f0; border-radius: 8px;">
+            Utilice los filtros de arriba para buscar evaluados.
+          </div>
+        }
+
+        @if (totalPages() > 1 && paginatedGroups().length > 0) {
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px;">
+            <span style="color: var(--text-2); font-size: 14px;">Mostrando pagina {{ currentPage() }} de {{ totalPages() }}</span>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">Anterior</button>
+              @for (page of getPageNumbers(); track page) {
+                <button class="btn" [class.btn-primary]="page === currentPage()" [class.btn-secondary]="page !== currentPage()" (click)="goToPage(page)">{{ page }}</button>
+              }
+              <button class="btn btn-secondary" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">Siguiente</button>
+            </div>
+          </div>
+        }
       </div>
     </section>
   }

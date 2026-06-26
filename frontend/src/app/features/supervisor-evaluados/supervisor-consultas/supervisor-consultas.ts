@@ -13,7 +13,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'app-supervisor-consultas',
   standalone: true,
-  imports: [FormsModule, LucideListFilter, LucideSearch],
+  imports: [FormsModule, LucideSearch],
   templateUrl: './supervisor-consultas.html',
   styleUrls: ['./supervisor-consultas.css']
 })
@@ -60,6 +60,9 @@ export class SupervisorConsultas {
     state: ''
   });
 
+  protected readonly currentPage = signal(1);
+  protected readonly pageSize = signal(5);
+
   protected readonly filteredConsultas = computed(() => {
     const filters = this.appliedFilters();
     
@@ -84,6 +87,68 @@ export class SupervisorConsultas {
       return matchDni && matchName && matchGrupo && matchPlaca && matchState && matchDateGroup;
     });
   });
+
+  protected readonly groupedConsultas = computed(() => {
+    const list = this.filteredConsultas();
+    const groupsMap = new Map<string, any>();
+    
+    for (const item of list) {
+      const dateStr = this.toLocalDateString(item.registradoEn);
+      const key = `${dateStr}-${item.numeroGrupo}`;
+      if (!groupsMap.has(key)) {
+        groupsMap.set(key, {
+          key,
+          date: dateStr,
+          registradoEn: item.registradoEn,
+          numeroGrupo: item.numeroGrupo,
+          colorNombre: item.colorNombre || 'Sin color',
+          colorHex: item.colorHex || '#ccc',
+          estadoGrupo: item.estadoGrupo,
+          items: []
+        });
+      }
+      groupsMap.get(key).items.push(item);
+    }
+    
+    return Array.from(groupsMap.values()).sort((a, b) => {
+      const dateCmp = b.date.localeCompare(a.date);
+      if (dateCmp !== 0) {
+        return dateCmp;
+      }
+      return a.numeroGrupo - b.numeroGrupo;
+    });
+  });
+
+  protected readonly totalPages = computed(() => {
+    return Math.max(1, Math.ceil(this.groupedConsultas().length / this.pageSize()));
+  });
+
+  protected readonly paginatedGroups = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.groupedConsultas().slice(start, start + this.pageSize());
+  });
+
+  protected goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  protected getPageNumbers(): number[] {
+    const pages = [];
+    const maxVisible = 5;
+    let start = Math.max(1, this.currentPage() - Math.floor(maxVisible / 2));
+    let end = Math.min(this.totalPages(), start + maxVisible - 1);
+    
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
 
   constructor() {
     this.loadConsultas();
@@ -125,6 +190,7 @@ export class SupervisorConsultas {
       dateGroup: dateGroup,
       state: this.filterState()
     });
+    this.currentPage.set(1);
   }
 
   protected clearFilters(): void {
@@ -147,7 +213,8 @@ export class SupervisorConsultas {
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true
     }).format(new Date(value));
   }
 

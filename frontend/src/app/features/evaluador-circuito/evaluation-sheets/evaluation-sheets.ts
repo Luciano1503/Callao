@@ -301,6 +301,10 @@ export class EvaluationSheets {
   }
 
   protected canEdit(sheet: EvaluatorSheetSummary): boolean {
+    const user = this.authService.currentUser();
+    if (user?.rolCodigo === 'ADMIN') {
+      return true;
+    }
     return sheet.estadoGrupo !== 'FINALIZADO' && sheet.resultadoFinal === 'PENDIENTE';
   }
 
@@ -359,7 +363,8 @@ export class EvaluationSheets {
 
     return new Intl.DateTimeFormat('es-PE', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true
     }).format(new Date(value));
   }
 
@@ -373,7 +378,8 @@ export class EvaluationSheets {
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true
     }).format(new Date(value));
   }
 

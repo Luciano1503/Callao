@@ -78,7 +78,7 @@
             </tr>
           }
 
-          @for (group of filteredGroups(); track group.id) {
+          @for (group of paginatedGroups(); track group.id) {
             <tr [class.is-locked]="group.estado === 'FINALIZADO'">
               <td><strong>Grupo {{ group.numeroGrupo }}</strong></td>
               <td><span class="color-dot" [style.background]="group.colorHex"></span>{{ group.colorNombre }}</td>
@@ -105,6 +105,42 @@
         </tbody>
       </table>
     </div>
+
+    @if (totalPages() > 1) {
+      <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+        <div class="subtext">
+          Mostrando {{ filteredGroups().length > 0 ? (currentPage() - 1) * itemsPerPage + 1 : 0 }} 
+          a {{ (currentPage() * itemsPerPage > filteredGroups().length) ? filteredGroups().length : (currentPage() * itemsPerPage) }} 
+          de {{ filteredGroups().length }} grupos
+        </div>
+        <div style="display: flex; gap: 0.25rem;">
+          <button 
+            type="button"
+            class="btn btn-ghost btn-sm" 
+            [disabled]="currentPage() === 1" 
+            (click)="changePage(currentPage() - 1)">
+            Anterior
+          </button>
+          @for (page of pages(); track page) {
+            <button 
+              type="button"
+              class="btn btn-sm" 
+              [class.btn-primary]="currentPage() === page"
+              [class.btn-ghost]="currentPage() !== page"
+              (click)="changePage(page)">
+              {{ page }}
+            </button>
+          }
+          <button 
+            type="button"
+            class="btn btn-ghost btn-sm" 
+            [disabled]="currentPage() === totalPages()" 
+            (click)="changePage(currentPage() + 1)">
+            Siguiente
+          </button>
+        </div>
+      </div>
+    }
   </section>
 
   @if (activeDetail(); as detail) {

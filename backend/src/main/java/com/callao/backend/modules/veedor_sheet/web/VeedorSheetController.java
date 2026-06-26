@@ -28,9 +28,9 @@ public class VeedorSheetController {
 
 	private final VeedorSheetService service;
 
-	@GetMapping("/grupos")
-	public ResponseEntity<ApiResponse<List<VeedorGroupSummaryResponse>>> findGroups() {
-		return ResponseEntity.ok(ApiResponse.ok("Grupos encontrados.", service.findGroups()));
+	@GetMapping("/{tipoVeedor}/grupos")
+	public ResponseEntity<ApiResponse<List<VeedorGroupSummaryResponse>>> findGroups(@PathVariable String tipoVeedor) {
+		return ResponseEntity.ok(ApiResponse.ok("Grupos encontrados.", service.findGroups(tipoVeedor)));
 	}
 
 	@GetMapping("/{tipoVeedor}/ficha-actual")

@@ -1,37 +1,37 @@
 <section>
-  <header class="page-header">
-    <div>
-      <p class="eyebrow">Veedor</p>
-      <h1 class="page-title">Ficha de Evaluacion: {{ position.label }}</h1>
-      <p class="page-copy">Registro de habilidad y reglamento.</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn btn-secondary" type="button" (click)="printSheet()">
-        <svg lucidePrinter class="icon"></svg>
-        <span>Imprimir</span>
-      </button>
-    </div>
-  </header>
-
-  <div class="assignment-pill" aria-label="Tipo de veedor asignado">
-    <span>Tipo asignado</span>
-    <strong>{{ position.label }}</strong>
+  <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
+    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" (click)="showHeader.set(!showHeader())">
+      {{ showHeader() ? 'Ocultar cabecera' : 'Mostrar cabecera' }}
+    </button>
   </div>
+
+  @if (showHeader()) {
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Veedor</p>
+        <h1 class="page-title">Ficha de Evaluacion: {{ position.label }}</h1>
+        <p class="page-copy">Registro de habilidad y reglamento.</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" type="button" (click)="printSheet()">
+          <svg lucidePrinter class="icon"></svg>
+          <span>Imprimir</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="assignment-pill" aria-label="Tipo de veedor asignado">
+      <span>Tipo asignado</span>
+      <strong>{{ position.label }}</strong>
+    </div>
+  }
 
   <section class="panel-card filters veedor-filters" style="margin-bottom: 24px;">
     <label class="field-group">
       <span class="field-label">Fecha del Grupo</span>
       <input class="field" type="date" [value]="filterDate()" (input)="updateFilterDate($event)" [disabled]="isChangingGroup()" />
     </label>
-    <label class="field-group">
-      <span class="field-label">Grupo a evaluar</span>
-      <select class="select" (change)="selectGroup($event)" [disabled]="isChangingGroup()">
-        <option value="">Seleccione un grupo...</option>
-        @for (summary of filteredGroups(); track summary.id) {
-          <option [value]="summary.id" [selected]="sheet()?.grupoId === summary.id">Grupo {{ summary.numeroGrupo }} ({{ summary.totalEvaluados }}/10)</option>
-        }
-      </select>
-    </label>
+
   </section>
 
   @if (errorMessage()) {
@@ -80,14 +80,29 @@
       </div>
     </section>
 
+    <div style="display: flex; align-items: stretch; width: 100%; gap: 8px; margin-bottom: 0px;">
+      <button class="btn btn-secondary" style="padding: 4px; border-radius: 4px; flex: 0 0 40px; width: 40px;" (click)="prevPage()" [disabled]="groupPage() === 0">&lt;</button>
+      @for (summary of visibleGroups(); track summary.id) {
+        <button type="button" 
+                [style.background]="summary.estado === 'FINALIZADO' || closedGroups().has(summary.id) ? '#e2e8f0' : summary.colorHex"
+                [style.color]="summary.estado === 'FINALIZADO' || closedGroups().has(summary.id) ? '#64748b' : '#000'"
+                [style.opacity]="sheet()?.grupoId === summary.id ? '1' : '0.4'"
+                style="flex: 1; min-width: 0; padding: 12px 4px; font-size: clamp(14px, 3vw, 20px); font-weight: bold; border: none; border-radius: 4px 4px 0 0; cursor: pointer; transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                (click)="selectGroupById(summary.id)" 
+                [disabled]="isChangingGroup()">
+          Grupo {{ summary.numeroGrupo }}
+        </button>
+      }
+      <button class="btn btn-secondary" style="padding: 4px; border-radius: 4px; flex: 0 0 40px; width: 40px;" (click)="nextPage()" [disabled]="groupPage() >= maxPage()">&gt;</button>
+    </div>
     <div class="table-wrap veedor-table-wrap">
       <table class="data-table veedor-table">
-        <thead>
-          <tr>
-            <th>N</th>
-            <th>CAT</th>
-            <th>Habilidad</th>
-            <th>Reglamento</th>
+        <thead [style.background-color]="currentSheet.estadoFicha === 'FINALIZADO' ? '#e2e8f0' : (currentSheet.colorHex + '66')">
+          <tr style="color: #000;">
+            <th style="background: transparent; color: inherit;">N</th>
+            <th style="background: transparent; color: inherit;">CAT</th>
+            <th style="background: transparent; color: inherit;">Habilidad</th>
+            <th style="background: transparent; color: inherit;">Reglamento</th>
           </tr>
         </thead>
         <tbody>
@@ -98,7 +113,7 @@
               </td>
               <td><span class="badge">{{ row.category }}</span></td>
               <td>
-                <details class="table-multi-picker" name="veedor-picker">
+                <details class="table-multi-picker" name="veedor-picker" [style.pointer-events]="isReadOnly() ? 'none' : 'auto'" [style.opacity]="isReadOnly() ? '0.6' : '1'">
                   <summary class="multi-trigger" aria-label="Habilidades seleccionables">
                     @for (siglas of selectedLabels(row.skills, skillOptions()); track siglas) {
                       <span class="mini-chip">{{ siglas }}</span>
@@ -119,7 +134,7 @@
                 </details>
               </td>
               <td>
-                <details class="table-multi-picker" name="veedor-picker">
+                <details class="table-multi-picker" name="veedor-picker" [style.pointer-events]="isReadOnly() ? 'none' : 'auto'" [style.opacity]="isReadOnly() ? '0.6' : '1'">
                   <summary class="multi-trigger" aria-label="Reglamentos seleccionables">
                     @for (siglas of selectedLabels(row.regulations, regulationOptions()); track siglas) {
                       <span class="mini-chip">{{ siglas }}</span>
@@ -165,19 +180,40 @@
 
     <footer class="sheet-actions">
       <p class="subtext">
-        @if (currentSheet.estadoGrupo === 'BORRADOR') {
-          El supervisor todavia no finaliza este grupo. No puedes calificar aun.
-        } @else if (currentSheet.estadoGrupo === 'FINALIZADO') {
+        @if (currentSheet.estadoGrupo === 'FINALIZADO') {
           La evaluación ha finalizado. Esta ficha es de solo lectura.
+        } @else if (currentSheet.estadoFicha === 'FINALIZADO') {
+          La ficha ya está cerrada y es de solo lectura.
         } @else {
-          Al finalizar la evaluación, esta ficha quedara en solo lectura.
+          Al finalizar la evaluación, esta ficha quedará en solo lectura.
         }
       </p>
-      <button class="btn btn-primary" type="button" [disabled]="isSaving() || isReadOnly() || rows().length === 0" (click)="saveSheet()">
-        <svg lucideSave class="icon"></svg>
-        <span>{{ isSaving() ? 'Guardando...' : 'Guardar ficha' }}</span>
+      <button class="btn btn-primary" type="button" [disabled]="isSaving() || isReadOnly() || rows().length === 0" (click)="openConfirmModal()" [style.background-color]="(isSaving() || isReadOnly() || rows().length === 0) ? '#e2e8f0' : currentSheet.colorHex" [style.border-color]="(isSaving() || isReadOnly() || rows().length === 0) ? '#e2e8f0' : currentSheet.colorHex" [style.color]="(isSaving() || isReadOnly() || rows().length === 0) ? '#94a3b8' : '#000'" style="font-weight: bold; font-size: 18px; padding: 12px 24px;">
+        <span>{{ isSaving() ? 'Cerrando...' : 'Cerrar ficha' }}</span>
       </button>
     </footer>
   </article>
+
+  @if (showConfirmCloseModal()) {
+    <div class="modal-backdrop">
+      <section class="modal-card modal-card-small">
+        <header class="modal-header">
+          <h3>Cerrar Ficha</h3>
+          <button class="icon-btn" (click)="closeConfirmModal()" aria-label="Cerrar modal">✕</button>
+        </header>
+        <div style="padding: 24px;">
+          <p style="margin: 0; font-size: 14px; color: #475569; line-height: 1.5;">
+            ¿Está seguro de cerrar la ficha? Al cerrar la ficha no podrá modificar la evaluación realizada.
+          </p>
+        </div>
+        <footer class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #e2e8f0;">
+          <button class="btn btn-secondary" (click)="closeConfirmModal()">Cancelar</button>
+          <button class="btn btn-primary" (click)="saveSheet()" [disabled]="isSaving()">
+            <span>{{ isSaving() ? 'Cerrando...' : 'Sí, cerrar ficha' }}</span>
+          </button>
+        </footer>
+      </section>
+    </div>
+  }
   }
 </section>

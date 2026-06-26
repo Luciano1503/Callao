@@ -88,6 +88,10 @@ export class Verification {
       return 'No se pudo conectar con el servidor. Verifique que el backend este activo.';
     }
 
+    if (error.error?.data && typeof error.error.data === 'object' && Object.keys(error.error.data).length > 0) {
+      return Object.values(error.error.data)[0] as string;
+    }
+
     return error.error?.message ?? 'No se pudo actualizar la contrasena. Intente nuevamente.';
   }
 }

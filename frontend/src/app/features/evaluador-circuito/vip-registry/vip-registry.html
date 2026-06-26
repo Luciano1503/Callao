@@ -1,0 +1,185 @@
+<div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Registro de VIPs</h1>
+    <p class="text-gray-600">Registra y administra los usuarios VIP para el centro de circuito.</p>
+  </div>
+
+  <div *ngIf="successMessage" class="mb-4 p-4 rounded-md bg-green-50 border border-green-200">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm font-medium text-green-800">{{ successMessage }}</p>
+      </div>
+      <div class="ml-auto pl-3">
+        <div class="-mx-1.5 -my-1.5">
+          <button type="button" (click)="successMessage = ''" class="inline-flex rounded-md p-1.5 text-green-500 hover:bg-green-100 focus:outline-none">
+            <span class="sr-only">Cerrar</span>
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm font-medium text-red-800">{{ errorMessage }}</p>
+      </div>
+      <div class="ml-auto pl-3">
+        <div class="-mx-1.5 -my-1.5">
+          <button type="button" (click)="errorMessage = ''" class="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100 focus:outline-none">
+            <span class="sr-only">Cerrar</span>
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+    <div class="px-6 py-5 border-b border-gray-100">
+      <h3 class="text-lg font-medium text-gray-900">Agregar Nuevo VIP</h3>
+    </div>
+    <div class="p-6">
+      <form [formGroup]="vipForm" (ngSubmit)="onSubmit()" class="flex flex-col sm:flex-row gap-4 items-start">
+        
+        <div class="w-full sm:w-1/3">
+          <label for="dni" class="block text-sm font-medium text-gray-700 mb-1">DNI</label>
+          <input type="text" id="dni" formControlName="dni" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-2 border" placeholder="Ingrese el DNI">
+          <div *ngIf="vipForm.get('dni')?.touched && vipForm.get('dni')?.invalid" class="mt-1 text-sm text-red-600">
+            <span *ngIf="vipForm.get('dni')?.errors?.['required']">El DNI es obligatorio.</span>
+            <span *ngIf="vipForm.get('dni')?.errors?.['pattern']">El DNI debe tener 8 dígitos numéricos.</span>
+          </div>
+        </div>
+
+        <div class="w-full sm:w-1/2">
+          <label for="nombres" class="block text-sm font-medium text-gray-700 mb-1">Nombres y Apellidos</label>
+          <input type="text" id="nombres" formControlName="nombres" oninput="this.value = this.value.replace(/[0-9]/g, '')" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-2 border" placeholder="Ingrese los nombres completos">
+          <div *ngIf="vipForm.get('nombres')?.touched && vipForm.get('nombres')?.invalid" class="mt-1 text-sm text-red-600">
+            <span *ngIf="vipForm.get('nombres')?.errors?.['required']">Los nombres son obligatorios.</span>
+            <span *ngIf="vipForm.get('nombres')?.errors?.['pattern']">Los nombres solo pueden contener letras.</span>
+          </div>
+        </div>
+
+        <div class="w-full sm:w-auto sm:self-start sm:mt-6">
+          <button type="submit" [disabled]="isSubmitting" class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span *ngIf="isSubmitting" class="mr-2">
+              <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </span>
+            Registrar VIP
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="px-6 py-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <h3 class="text-lg font-medium text-gray-900">Lista de VIPs</h3>
+      
+      <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+        <div class="relative w-full sm:w-64">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="currentPage = 1" placeholder="Buscar por DNI o Nombre..." class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm">
+        </div>
+
+        <button (click)="loadVips()" class="text-sm text-blue-600 hover:text-blue-800 focus:outline-none font-medium flex items-center shrink-0">
+          <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Actualizar
+        </button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DNI</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombres</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Registro</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngIf="isLoading && vips.length === 0">
+            <td colspan="4" class="px-6 py-8 text-center text-gray-500 text-sm">
+              <div class="flex flex-col items-center justify-center">
+                <svg class="animate-spin h-6 w-6 text-blue-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Cargando registros...
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="!isLoading && vips.length === 0">
+            <td colspan="4" class="px-6 py-8 text-center text-gray-500 text-sm">
+              No hay usuarios VIP registrados.
+            </td>
+          </tr>
+          <tr *ngIf="!isLoading && vips.length > 0 && filteredVips.length === 0">
+            <td colspan="4" class="px-6 py-8 text-center text-gray-500 text-sm">
+              No se encontraron resultados para la búsqueda "{{ searchTerm }}".
+            </td>
+          </tr>
+          <ng-container *ngIf="filteredVips.length > 0">
+            <tr *ngFor="let vip of paginatedVips" class="hover:bg-gray-50 transition-opacity duration-200" [class.opacity-50]="isLoading">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ vip.dni }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ vip.nombres }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ vip.creadoEn | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button (click)="deleteVip(vip.dni)" [disabled]="isLoading" class="text-red-600 hover:text-red-900 font-medium focus:outline-none disabled:opacity-50">
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between" *ngIf="totalPages > 1 || searchTerm">
+      <div class="text-sm text-gray-500">
+        Mostrando {{ filteredVips.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0 }} a {{ (currentPage * itemsPerPage > filteredVips.length) ? filteredVips.length : (currentPage * itemsPerPage) }} de {{ filteredVips.length }} VIPs
+      </div>
+      <div class="flex space-x-1" *ngIf="totalPages > 1">
+        <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1" class="px-3 py-1 rounded-md border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none">
+          Anterior
+        </button>
+        <button *ngFor="let page of pages" (click)="changePage(page)" 
+                [class.bg-blue-50]="currentPage === page" 
+                [class.text-blue-700]="currentPage === page" 
+                [class.border-blue-300]="currentPage === page" 
+                class="px-3 py-1 rounded-md border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 focus:outline-none">
+          {{ page }}
+        </button>
+        <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages" class="px-3 py-1 rounded-md border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none">
+          Siguiente
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

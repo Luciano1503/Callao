@@ -10,10 +10,12 @@ import { CatalogService } from '../../../core/services/catalog.service';
 import { SupervisorEvaluadosService } from '../../../core/services/supervisor-evaluados.service';
 import { ScannerService } from '../../../core/services/scanner.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { VipRegistryService } from '../../evaluador-circuito/vip-registry/vip-registry.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-evaluated-relation',
-  imports: [LucideCheckCircle2, LucidePlus, LucideSave, LucideUserRoundPlus],
+  imports: [LucideCheckCircle2, LucidePlus, LucideSave, LucideUserRoundPlus, FormsModule],
   templateUrl: './evaluated-relation.html'
 })
 export class EvaluatedRelation {
@@ -21,8 +23,10 @@ export class EvaluatedRelation {
   private readonly catalogService = inject(CatalogService);
   private readonly supervisorService = inject(SupervisorEvaluadosService);
   private readonly scannerService = inject(ScannerService);
+  private readonly vipRegistryService = inject(VipRegistryService);
 
   protected readonly scannedDni = signal('');
+  protected readonly nombres = signal('');
 
   protected readonly categories = signal<CategoriaCatalog[]>([]);
   protected readonly colors = signal<ColorCatalog[]>([]);
@@ -72,13 +76,15 @@ export class EvaluatedRelation {
   });
 
   protected readonly canCreateNewGroup = computed(() => {
-    const group = this.activeGroup();
-    return !group || group.totalEvaluados >= group.capacidadMaxima || group.estado !== 'BORRADOR';
+    const groups = this.groups();
+    // Cache bust: 2026-06-25
+    console.log('Evaluated groups state:', groups.map(g => g.estado));
+    return groups.length === 0 || !groups.some(g => g.estado === 'BORRADOR');
   });
 
   protected readonly canFinalizeGroup = computed(() => {
     const group = this.activeGroup();
-    return !!group && group.estado === 'BORRADOR' && group.totalEvaluados === group.capacidadMaxima;
+    return !!group && group.estado === 'BORRADOR' && group.totalEvaluados > 0;
   });
 
   constructor() {
@@ -107,7 +113,39 @@ export class EvaluatedRelation {
     this.scannerService.scan$.pipe(takeUntilDestroyed()).subscribe((dni) => {
       this.scannedDni.set(dni);
       this.successMessage.set('DNI capturado automáticamente: ' + dni);
+      this.checkVip(dni);
     });
+  }
+
+  protected onDniInput(event: Event): void {
+    const dni = (event.target as HTMLInputElement).value.replace(/[^0-9]/g, '');
+    this.scannedDni.set(dni);
+    if (dni.length === 8) {
+      this.checkVip(dni);
+    }
+  }
+
+  private checkVip(dni: string): void {
+    this.vipRegistryService.findByDni(dni).subscribe({
+      next: (response) => {
+        if (response.data && response.data.nombres) {
+          this.nombres.set(this.toTitleCase(response.data.nombres));
+          this.successMessage.set('Usuario VIP detectado. Nombres autocompletados.');
+        }
+      },
+      error: () => {
+        // Ignorar si no es VIP (404)
+      }
+    });
+  }
+
+  private toTitleCase(str: string): string {
+    if (!str) return '';
+    return str
+      .toLowerCase()
+      .split(/\s+/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   protected addEvaluated(event: SubmitEvent): void {
@@ -140,7 +178,7 @@ export class EvaluatedRelation {
     this.supervisorService.addEvaluated(group.id, {
       supervisorId: this.supervisorId(),
       dni,
-      nombres: String(formData.get('nombres') ?? '').trim(),
+      nombres: this.toTitleCase(String(formData.get('nombres') ?? '').trim()),
       categoriaId: categoryId,
       placa: String(formData.get('placa') ?? '').trim()
     }).subscribe({
@@ -151,6 +189,7 @@ export class EvaluatedRelation {
         this.successMessage.set('Evaluado registrado correctamente.');
         this.placaSearchTerm.set('');
         this.scannedDni.set('');
+        this.nombres.set('');
         this.selectedSedeId.set(null);
         form.reset();
       },
@@ -177,11 +216,6 @@ export class EvaluatedRelation {
   }
 
   protected createGroup(): void {
-    if (!this.newGroupColorId()) {
-      this.errorMessage.set('Debe seleccionar un color para crear el grupo.');
-      return;
-    }
-
     this.clearMessages();
     this.isCreatingGroup.set(true);
 
@@ -241,17 +275,17 @@ export class EvaluatedRelation {
     });
   }
 
-  protected updateGroupDate(event: Event): void {
+  protected updateGroupTime(event: Event): void {
     const group = this.activeGroup();
-    const dateValue = (event.target as HTMLInputElement).value;
+    const timeValue = (event.target as HTMLInputElement).value;
 
-    if (!group || !dateValue) {
+    if (!group || !timeValue) {
       return;
     }
 
-    // Input type datetime-local does not include seconds or timezone, so we append them.
-    // The value looks like "2023-10-15T14:30"
-    const registradoEn = dateValue.length === 16 ? dateValue + ':00' : dateValue;
+    // Input type time gives "HH:mm". We append it to the existing date
+    const datePart = group.registradoEn.substring(0, 10);
+    const registradoEn = datePart + 'T' + timeValue + ':00';
 
     this.clearMessages();
     this.isUpdatingDate.set(true);
@@ -367,7 +401,8 @@ export class EvaluatedRelation {
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true
     }).format(new Date(value));
   }
 
@@ -390,18 +425,18 @@ export class EvaluatedRelation {
 
     return new Intl.DateTimeFormat('es-PE', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true
     }).format(new Date(value));
   }
 
-  protected formatDateTimeForInput(value: string | null): string {
+  protected formatTimeForInput(value: string | null): string {
     if (!value) {
       return '';
     }
 
-    // datetime-local format is YYYY-MM-DDThh:mm
-    // Backend sends ISO string like "2023-10-15T14:30:00" without Z
-    return value.substring(0, 16);
+    // backend ISO string "2023-10-15T14:30:00" -> time part "14:30"
+    return value.substring(11, 16);
   }
 
   protected formatStatus(value: string): string {

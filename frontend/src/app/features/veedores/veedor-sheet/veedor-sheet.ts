@@ -42,7 +42,7 @@ const VEEDORES: VeedorType[] = [
 
 @Component({
   selector: 'app-veedor-sheet',
-  imports: [LucideCalendar, LucideClock, LucideSave, LucidePrinter],
+  imports: [LucideCalendar, LucideClock, LucidePrinter],
   templateUrl: './veedor-sheet.html'
 })
 export class VeedorSheet implements OnDestroy {
@@ -60,6 +60,9 @@ export class VeedorSheet implements OnDestroy {
   protected readonly regulationOptions = signal<CriterioCatalog[]>([]);
   protected readonly sheet = signal<VeedorSheetModel | null>(null);
   protected readonly groups = signal<EvaluatedGroupSummary[]>([]);
+  protected readonly showHeader = signal(false);
+  protected readonly groupPage = signal(0);
+  protected readonly groupsPerPage = 3;
   
   private getLocalToday(): string {
     return this.timeService.getLocalToday();
@@ -83,6 +86,24 @@ export class VeedorSheet implements OnDestroy {
     const date = this.filterDate();
     return this.groups().filter(g => !date || this.toLocalDateString(g.registradoEn) === date);
   });
+
+  protected readonly visibleGroups = computed(() => {
+    const all = this.filteredGroups();
+    const start = this.groupPage() * this.groupsPerPage;
+    return all.slice(start, start + this.groupsPerPage);
+  });
+
+  protected readonly maxPage = computed(() => {
+    return Math.max(0, Math.ceil(this.filteredGroups().length / this.groupsPerPage) - 1);
+  });
+
+  protected prevPage(): void {
+    if (this.groupPage() > 0) this.groupPage.update(p => p - 1);
+  }
+
+  protected nextPage(): void {
+    if (this.groupPage() < this.maxPage()) this.groupPage.update(p => p + 1);
+  }
   
   protected readonly rows = signal<VeedorRow[]>([]);
   protected readonly observations = signal('');
@@ -91,11 +112,13 @@ export class VeedorSheet implements OnDestroy {
   protected readonly isSaving = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
+  protected readonly showConfirmCloseModal = signal(false);
+  protected readonly closedGroups = signal<Set<number>>(new Set());
   protected readonly String = String;
   protected readonly isReadOnly = computed(() => {
     const sheet = this.sheet();
     if (!sheet) return true;
-    return sheet.estadoGrupo === 'FINALIZADO' || sheet.estadoFicha === 'FINALIZADO';
+    return sheet.estadoFicha === 'FINALIZADO' || sheet.estadoGrupo === 'FINALIZADO';
   });
 
   constructor(route: ActivatedRoute) {
@@ -105,8 +128,17 @@ export class VeedorSheet implements OnDestroy {
       this.loadCriteria(this.position.route);
       this.sheet.set(null);
       this.isLoading.set(false);
+
+      this.veedorSheetService.getCurrentSheet(this.position.route).subscribe({
+        next: (sheet) => {
+          this.applySheet(sheet);
+          this.loadGroups();
+        },
+        error: () => {
+          this.loadGroups();
+        }
+      });
     });
-    this.loadGroups();
 
     this.websocketService.connect();
     this.wsSubscription = this.websocketService.onVeedoresUpdate().subscribe((data: any) => {
@@ -212,11 +244,28 @@ export class VeedorSheet implements OnDestroy {
       next: (updatedSheet) => {
         this.isSaving.set(false);
         this.applySheet(updatedSheet);
-        this.successMessage.set('Ficha guardada correctamente.');
+        this.closedGroups.update(s => {
+          s.add(updatedSheet.grupoId);
+          return new Set(s);
+        });
+        this.successMessage.set('Ficha cerrada correctamente.');
+        this.showConfirmCloseModal.set(false);
+
+        const currentGroupId = updatedSheet.grupoId;
+        const allGroups = this.filteredGroups();
+        const currentIndex = allGroups.findIndex(g => g.id === currentGroupId);
+        
+        if (currentIndex !== -1 && currentIndex + 1 < allGroups.length) {
+          const nextGroup = allGroups[currentIndex + 1];
+          this.selectGroupById(nextGroup.id);
+        }
+
+        this.loadGroups();
       },
       error: (error: unknown) => {
         this.isSaving.set(false);
         this.errorMessage.set(this.resolveError(error));
+        this.showConfirmCloseModal.set(false);
       }
     });
   }
@@ -242,13 +291,20 @@ export class VeedorSheet implements OnDestroy {
       }))
     }).subscribe({
       next: (updatedSheet) => {
-        this.sheet.set(updatedSheet);
+        this.applySheet(updatedSheet);
       }
     });
   }
 
-  protected selectGroup(event: Event): void {
-    const groupId = Number((event.target as HTMLSelectElement).value);
+  protected openConfirmModal(): void {
+    this.showConfirmCloseModal.set(true);
+  }
+
+  protected closeConfirmModal(): void {
+    this.showConfirmCloseModal.set(false);
+  }
+
+  protected selectGroupById(groupId: number): void {
     if (!groupId) {
       this.sheet.set(null);
       return;
@@ -287,7 +343,8 @@ export class VeedorSheet implements OnDestroy {
 
     return new Intl.DateTimeFormat('es-PE', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true
     }).format(new Date(value));
   }
 
@@ -310,13 +367,54 @@ export class VeedorSheet implements OnDestroy {
 
 
   private loadGroups(): void {
-    this.veedorSheetService.getGroups().subscribe({
-      next: (groups) => this.groups.set(groups),
-      error: (error: unknown) => this.errorMessage.set(this.resolveError(error))
+    if (!this.position) return;
+    this.veedorSheetService.getGroups(this.position.route).subscribe({
+      next: (groups) => {
+        this.groups.set(groups);
+        
+        const finalizedGroupIds = groups.filter(g => g.veedorFinalizado).map(g => g.id);
+        this.closedGroups.update(current => {
+          const updated = new Set(current);
+          finalizedGroupIds.forEach(id => updated.add(id));
+          return updated;
+        });
+
+        this.autoSelectPage();
+      },
+      error: (error: unknown) => {
+        this.errorMessage.set(this.resolveError(error));
+      }
     });
   }
 
+  private autoSelectPage(): void {
+    const all = this.filteredGroups();
+    
+    const currentSheet = this.sheet();
+    if (currentSheet) {
+      const currentIndex = all.findIndex(g => g.id === currentSheet.grupoId);
+      if (currentIndex !== -1) {
+        this.groupPage.set(Math.floor(currentIndex / this.groupsPerPage));
+      }
+      return;
+    }
+
+    if (all.length > 0) {
+      this.groupPage.set(0);
+      const firstOpenIndex = all.findIndex(g => g.estado !== 'FINALIZADO');
+      const groupToSelect = all[firstOpenIndex !== -1 ? firstOpenIndex : 0];
+      this.selectGroupById(groupToSelect.id);
+    }
+  }
+
   private applySheet(sheet: VeedorSheetModel): void {
+    if (sheet.estadoFicha === 'FINALIZADO') {
+      this.closedGroups.update(s => {
+        s.add(sheet.grupoId);
+        return new Set(s);
+      });
+    }
+
     this.sheet.set(sheet);
     this.observations.set(sheet.observaciones ?? '');
     this.rows.set(sheet.evaluados.map((row) => this.toViewRow(row)));

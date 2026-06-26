@@ -54,7 +54,8 @@ public class VeedorSheetRepository {
 				       g.registrado_en
 				FROM callao.grupos_evaluacion g
 				INNER JOIN callao.colores_grupo c ON c.id = g.color_id
-				ORDER BY g.numero_grupo DESC, g.id DESC
+				WHERE DATE(g.registrado_en) = CURRENT_DATE
+				ORDER BY g.numero_grupo ASC, g.id ASC
 				LIMIT 1
 				""",
 				(rs, rowNum) -> mapGroup(rs)
@@ -66,7 +67,41 @@ public class VeedorSheetRepository {
 		}
 	}
 
-	public List<VeedorGroupSummaryResponse> findGroups() {
+	public Optional<GroupRow> findPendingGroupForVeedor(Long veedorId, Long tipoVeedorId) {
+		try {
+			GroupRow row = jdbcTemplate.queryForObject(
+				"""
+				SELECT g.id,
+				       g.numero_grupo,
+				       c.nombre AS color_nombre,
+				       c.codigo_hex AS color_hex,
+				       g.estado,
+				       g.registrado_en
+				FROM callao.grupos_evaluacion g
+				INNER JOIN callao.colores_grupo c ON c.id = g.color_id
+				WHERE DATE(g.registrado_en) = CURRENT_DATE 
+				  AND NOT EXISTS (
+				    SELECT 1 FROM callao.fichas_veedor f
+				    WHERE f.grupo_id = g.id 
+				      AND f.veedor_id = ? 
+				      AND f.tipo_veedor_id = ?
+				      AND f.estado = 'FINALIZADO'
+				)
+				ORDER BY g.numero_grupo ASC, g.id ASC
+				LIMIT 1
+				""",
+				(rs, rowNum) -> mapGroup(rs),
+				veedorId,
+				tipoVeedorId
+			);
+
+			return Optional.ofNullable(row);
+		} catch (EmptyResultDataAccessException exception) {
+			return Optional.empty();
+		}
+	}
+
+	public List<VeedorGroupSummaryResponse> findGroups(Long veedorId, Long tipoVeedorId) {
 		return jdbcTemplate.query(
 			"""
 			SELECT g.id,
@@ -75,10 +110,18 @@ public class VeedorSheetRepository {
 			       c.codigo_hex AS color_hex,
 			       g.estado,
 			       (SELECT COUNT(*) FROM callao.evaluados_grupo WHERE grupo_id = g.id) AS total_evaluados,
-			       g.registrado_en
+			       g.registrado_en,
+			       EXISTS (
+			           SELECT 1 FROM callao.fichas_veedor f
+			           WHERE f.grupo_id = g.id 
+			             AND f.veedor_id = ? 
+			             AND f.tipo_veedor_id = ?
+			             AND f.estado = 'FINALIZADO'
+			       ) AS veedor_finalizado
 			FROM callao.grupos_evaluacion g
 			INNER JOIN callao.colores_grupo c ON c.id = g.color_id
-			ORDER BY g.numero_grupo DESC, g.id DESC
+			WHERE DATE(g.registrado_en) = CURRENT_DATE
+			ORDER BY g.numero_grupo ASC, g.id ASC
 			LIMIT 20
 			""",
 			(rs, rowNum) -> new VeedorGroupSummaryResponse(
@@ -88,8 +131,11 @@ public class VeedorSheetRepository {
 				rs.getString("color_hex"),
 				rs.getString("estado"),
 				rs.getInt("total_evaluados"),
-				toLocalDateTime(rs.getTimestamp("registrado_en"))
-			)
+				toLocalDateTime(rs.getTimestamp("registrado_en")),
+				rs.getBoolean("veedor_finalizado")
+			),
+			veedorId,
+			tipoVeedorId
 		);
 	}
 
@@ -193,53 +239,54 @@ public class VeedorSheetRepository {
 
 	public Long upsertFicha(Long groupId, Long tipoVeedorId, Long veedorId, String observaciones, boolean isFinalizado) {
 		String estado = isFinalizado ? "FINALIZADO" : "GUARDADO";
-		return jdbcTemplate.queryForObject(
-			"""
-			INSERT INTO callao.fichas_veedor (
-				grupo_id,
-				tipo_veedor_id,
-				veedor_id,
-				observaciones,
-				estado
-			)
-			VALUES (?, ?, ?, ?, ?)
-			ON CONFLICT (grupo_id, tipo_veedor_id)
-			DO UPDATE SET
-				veedor_id = EXCLUDED.veedor_id,
-				observaciones = EXCLUDED.observaciones,
-				estado = EXCLUDED.estado,
-				actualizado_en = CURRENT_TIMESTAMP
-			RETURNING id
-			""",
-			Long.class,
-			groupId,
-			tipoVeedorId,
-			veedorId,
-			observaciones,
-			estado
+		
+		List<Long> existingIds = jdbcTemplate.queryForList(
+			"SELECT id FROM callao.fichas_veedor WHERE grupo_id = ? AND tipo_veedor_id = ?",
+			Long.class, groupId, tipoVeedorId
 		);
+
+		if (!existingIds.isEmpty()) {
+			Long id = existingIds.get(0);
+			jdbcTemplate.update(
+				"UPDATE callao.fichas_veedor SET veedor_id = ?, observaciones = ?, estado = ?, actualizado_en = CURRENT_TIMESTAMP WHERE id = ?",
+				veedorId, observaciones, estado, id
+			);
+			return id;
+		} else {
+			return jdbcTemplate.queryForObject(
+				"""
+				INSERT INTO callao.fichas_veedor (grupo_id, tipo_veedor_id, veedor_id, observaciones, estado)
+				VALUES (?, ?, ?, ?, ?)
+				RETURNING id
+				""",
+				Long.class, groupId, tipoVeedorId, veedorId, observaciones, estado
+			);
+		}
 	}
 
 	public Long upsertDetalle(Long fichaId, Long evaluadoGrupoId, String observacion) {
-		return jdbcTemplate.queryForObject(
-			"""
-			INSERT INTO callao.fichas_veedor_detalle (
-				ficha_veedor_id,
-				evaluado_grupo_id,
-				observacion
-			)
-			VALUES (?, ?, ?)
-			ON CONFLICT (ficha_veedor_id, evaluado_grupo_id)
-			DO UPDATE SET
-				observacion = EXCLUDED.observacion,
-				actualizado_en = CURRENT_TIMESTAMP
-			RETURNING id
-			""",
-			Long.class,
-			fichaId,
-			evaluadoGrupoId,
-			observacion
+		List<Long> existingIds = jdbcTemplate.queryForList(
+			"SELECT id FROM callao.fichas_veedor_detalle WHERE ficha_veedor_id = ? AND evaluado_grupo_id = ?",
+			Long.class, fichaId, evaluadoGrupoId
 		);
+
+		if (!existingIds.isEmpty()) {
+			Long id = existingIds.get(0);
+			jdbcTemplate.update(
+				"UPDATE callao.fichas_veedor_detalle SET observacion = ?, actualizado_en = CURRENT_TIMESTAMP WHERE id = ?",
+				observacion, id
+			);
+			return id;
+		} else {
+			return jdbcTemplate.queryForObject(
+				"""
+				INSERT INTO callao.fichas_veedor_detalle (ficha_veedor_id, evaluado_grupo_id, observacion)
+				VALUES (?, ?, ?)
+				RETURNING id
+				""",
+				Long.class, fichaId, evaluadoGrupoId, observacion
+			);
+		}
 	}
 
 	public void replaceCriteria(Long detalleId, List<Long> criterionIds) {

@@ -7,6 +7,7 @@ public record SupervisorConsultaResponse(
 	Long grupoId,
 	Integer numeroGrupo,
 	String colorNombre,
+	String colorHex,
 	String dni,
 	String nombres,
 	String placa,

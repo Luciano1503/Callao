@@ -79,7 +79,7 @@ public class SupervisorEvaluadosRepository {
 			LEFT JOIN callao.evaluados_grupo e ON e.grupo_id = g.id
 			WHERE g.supervisor_id = ? AND DATE(g.registrado_en) = CURRENT_DATE
 			GROUP BY g.id, g.numero_grupo, c.nombre, c.codigo_hex, g.estado, g.registrado_en
-			ORDER BY g.numero_grupo DESC, g.id DESC
+			ORDER BY g.numero_grupo ASC, g.id ASC
 			""",
 			(rs, rowNum) -> new EvaluatedGroupSummaryResponse(
 				rs.getLong("id"),
@@ -139,6 +139,7 @@ public class SupervisorEvaluadosRepository {
 			       e.grupo_id,
 			       g.numero_grupo,
 			       cg.nombre AS color_nombre,
+			       cg.codigo_hex AS color_hex,
 			       e.dni,
 			       e.nombres,
 			       e.placa,
@@ -159,6 +160,7 @@ public class SupervisorEvaluadosRepository {
 				rs.getLong("grupo_id"),
 				rs.getInt("numero_grupo"),
 				rs.getString("color_nombre"),
+				rs.getString("color_hex"),
 				rs.getString("dni"),
 				rs.getString("nombres"),
 				rs.getString("placa"),
@@ -208,14 +210,15 @@ public class SupervisorEvaluadosRepository {
 				categoria_id,
 				es_vip
 			)
-			VALUES (?, ?, ?, ?, ?, ?, false)
+			VALUES (?, ?, ?, ?, ?, ?, ?)
 			""",
 			row.grupoId(),
 			row.numeroFila(),
 			row.dni(),
 			row.nombres(),
 			row.placa(),
-			row.categoriaId()
+			row.categoriaId(),
+			row.esVip()
 		);
 	}
 
@@ -328,7 +331,7 @@ public class SupervisorEvaluadosRepository {
 			SELECT id
 			FROM callao.colores_grupo
 			WHERE activo = TRUE
-			ORDER BY id ASC
+			ORDER BY CASE nombre WHEN 'Amarillo' THEN 1 WHEN 'Rojo' THEN 2 WHEN 'Azul' THEN 3 ELSE 4 END, id ASC
 			""",
 			(rs, rowNum) -> rs.getLong("id")
 		);
@@ -380,13 +383,13 @@ public class SupervisorEvaluadosRepository {
 
 	public record CreateEvaluatedRow(
 		Long grupoId,
-		Integer numeroFila,
+		int numeroFila,
 		String dni,
 		String nombres,
 		String placa,
-		Long categoriaId
-	) {
-	}
+		Long categoriaId,
+		boolean esVip
+	) {}
 
 	public record GroupRow(
 		Long id,

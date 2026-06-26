@@ -1,9 +1,9 @@
 <section>
   <header class="page-header">
     <div>
-      <p class="eyebrow">Supervisor de evaluados</p>
+      <p class="eyebrow">Supervisor de evaluados (V2 - Lógica actualizada)</p>
       <h1 class="page-title">Relacion de Evaluados</h1>
-      <p class="page-copy">Registro por grupos numericos de 10 personas. Todos los evaluados inician en estado Pendiente.</p>
+      <p class="page-copy">Registro por grupos numericos. Todos los evaluados inician en estado Pendiente.</p>
     </div>
     <button class="btn btn-primary" type="button" (click)="startCreatingGroup()" [disabled]="isCreatingGroup() || !canCreateNewGroup() || showNewGroupForm()">
       <svg lucidePlus class="icon"></svg>
@@ -18,20 +18,14 @@
         <h3 style="margin: 0; font-size: 20px; color: var(--primary-strong);">Crear Nuevo Grupo</h3>
       </div>
       <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
-        <label class="field-group" style="flex: 1; min-width: 280px; margin: 0;">
-          <span class="field-label" style="font-size: 14px; margin-bottom: 8px;">Seleccione el color identificativo para el grupo</span>
-          <select class="select" (change)="selectNewGroupColor($event)" style="height: 48px; width: 100%; border-radius: 6px;">
-            <option value="" disabled [selected]="!newGroupColorId()">Elija un color de la lista</option>
-            @for (color of colors(); track color.id) {
-              <option [value]="color.id">{{ color.nombre }}</option>
-            }
-          </select>
-        </label>
+        <div style="flex: 1; min-width: 280px; margin: 0; padding-top: 8px;">
+          <p style="margin: 0; font-size: 14px; color: var(--text-2);">Se asignará un color automáticamente al crear el grupo (Cíclico: Amarillo, Rojo, Azul).</p>
+        </div>
         <div style="display: flex; gap: 12px; align-items: center;">
           <button class="btn btn-secondary" type="button" (click)="cancelCreatingGroup()" [disabled]="isCreatingGroup()" style="height: 48px; min-width: 120px;">
             Cancelar
           </button>
-          <button class="btn btn-primary" type="button" (click)="createGroup()" [disabled]="isCreatingGroup() || !newGroupColorId()" style="height: 48px; min-width: 180px;">
+          <button class="btn btn-primary" type="button" (click)="createGroup()" [disabled]="isCreatingGroup()" style="height: 48px; min-width: 180px;">
             {{ isCreatingGroup() ? 'Creando...' : 'Confirmar Creación' }}
           </button>
         </div>
@@ -55,43 +49,37 @@
         <div class="panel-card group-controls">
           <label class="field-group">
             <span class="field-label">Grupo</span>
-            <select class="select" (change)="selectGroup($event)" [disabled]="isChangingGroup()" [value]="group.id">
+            <select class="select" (change)="selectGroup($event)" [disabled]="isChangingGroup()" [ngModel]="group.id">
               @for (summary of groups(); track summary.id) {
-                <option [value]="summary.id">{{ 'Grupo ' + summary.numeroGrupo + ' (' + summary.totalEvaluados + '/10)' }}</option>
+                <option [value]="summary.id">{{ 'Grupo ' + summary.numeroGrupo + ' (' + summary.totalEvaluados + ' evaluados)' }}</option>
               } @empty {
                 <option [value]="group.id">Grupo {{ group.numeroGrupo }}</option>
               }
             </select>
-        </label>
-          <label class="field-group">
-            <span class="field-label">Color asignado</span>
-            <span class="color-select-shell">
-              <span class="color-dot" [style.background]="group.colorHex"></span>
-              <select class="select color-select" (change)="updateGroupColor($event)" [disabled]="group.estado !== 'BORRADOR' || isUpdatingColor() || isChangingGroup()">
-                <option value="" disabled [selected]="!group.colorId">Seleccione un color</option>
-                @for (color of colors(); track color.id) {
-                  <option [value]="color.id" [selected]="color.id === group.colorId">{{ color.nombre }}</option>
-                }
-              </select>
-            </span>
           </label>
-        <div class="field-group">
-          <span class="field-label">Fecha y hora de registro</span>
-          <input
-            type="datetime-local"
-            class="field"
-            [value]="formatDateTimeForInput(group.registradoEn)"
-            (change)="updateGroupDate($event)"
-            [disabled]="group.estado !== 'BORRADOR' || isUpdatingDate() || isChangingGroup()"
-          />
+          <div class="field-group">
+            <span class="field-label">Color asignado</span>
+            <span style="padding: 0 14px; border: 1px solid #e2e8f0; border-radius: 6px; display: inline-flex; align-items: center; gap: 8px; background: #f8fafc; height: 42px;">
+              <span class="color-dot" [style.background]="group.colorHex"></span>
+              <span style="font-weight: 500;">{{ group.colorNombre }}</span>
+            </span>
+          </div>
+          <div class="field-group">
+            <span class="field-label">Hora de registro (Fecha: {{ formatDate(group.registradoEn) }})</span>
+            <input
+              type="time"
+              class="field"
+              [value]="formatTimeForInput(group.registradoEn)"
+              (change)="updateGroupTime($event)"
+              [disabled]="group.estado !== 'BORRADOR' || isUpdatingDate() || isChangingGroup()"
+            />
+          </div>
         </div>
-      </div>
 
-      <aside class="panel-card progress-card">
-        <strong>Progreso de Registro</strong>
-        <span class="progress-count">{{ group.totalEvaluados }} / {{ group.capacidadMaxima }}</span>
-        <div class="progress-track"><span [style.width.%]="progressPercent()"></span></div>
-        <small>{{ formatStatus(group.estado) }}</small>
+      <aside class="panel-card progress-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: #f8fbff; border-left: 4px solid var(--primary);">
+        <strong style="color: var(--primary-strong);">Evaluados Registrados</strong>
+        <span style="font-size: 28px; font-weight: 700; color: var(--text-1);">{{ group.totalEvaluados }}</span>
+        <small class="badge" [class.warning]="group.estado === 'BORRADOR'" [class.success]="group.estado === 'FINALIZADO'">{{ formatStatus(group.estado) }}</small>
       </aside>
     </section>
 
@@ -104,11 +92,11 @@
         <fieldset class="relation-fieldset" [disabled]="isSubmitting() || !group.puedeAgregar">
           <label class="field-group">
             <span class="field-label">DNI <span class="required">*</span></span>
-            <input class="field" name="dni" inputmode="numeric" maxlength="8" minlength="8" pattern="[0-9]{8}" placeholder="Ingrese DNI" required [value]="scannedDni()" (input)="scannedDni.set($any($event.target).value)" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+            <input class="field" name="dni" inputmode="numeric" maxlength="8" minlength="8" pattern="[0-9]{8}" placeholder="Ingrese DNI" required [value]="scannedDni()" (input)="onDniInput($event)" oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
           </label>
           <label class="field-group">
             <span class="field-label">Nombres y Apellidos <span class="required">*</span></span>
-            <input class="field" name="nombres" pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+" placeholder="Nombre completo" required oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')" />
+            <input class="field" name="nombres" pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+" placeholder="Nombre completo" required [value]="nombres()" (input)="nombres.set($any($event.target).value)" oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '')" />
           </label>
           <label class="field-group">
             <span class="field-label">Categoria <span class="required">*</span></span>
@@ -179,7 +167,7 @@
           <tbody>
             @for (person of group.evaluados; track person.id) {
               <tr>
-                <td [style.background-color]="person.esVip ? '#b3e5fc' : 'transparent'">{{ person.numeroFila }}</td>
+                <td>{{ person.numeroFila }}</td>
                 <td>{{ person.dni }}</td>
                 <td><strong>{{ person.nombres }}</strong></td>
                 <td>{{ person.categoriaCodigo }}</td>
@@ -213,7 +201,7 @@
       </div>
       <aside class="final-card">
         <h2>Guardar grupo</h2>
-        <p>{{ group.totalEvaluados }} de {{ group.capacidadMaxima }} evaluados registrados.</p>
+        <p>{{ group.totalEvaluados }} evaluados registrados en total.</p>
         <button class="btn btn-primary btn-full" type="button" (click)="finalizeGroup()" [disabled]="isFinalizing() || !canFinalizeGroup()">
           <svg lucideCheckCircle2 class="icon"></svg>
           <span>{{ isFinalizing() ? 'Guardando...' : 'Finalizar grupo' }}</span>

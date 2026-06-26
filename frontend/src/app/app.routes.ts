@@ -7,6 +7,7 @@ import { EditUser } from './features/admin/edit-user/edit-user';
 import { EvaluatedRelation } from './features/supervisor-evaluados/evaluated-relation/evaluated-relation';
 import { SupervisorConsultas } from './features/supervisor-evaluados/supervisor-consultas/supervisor-consultas';
 import { EvaluatorVip } from './features/evaluador-circuito/evaluator-vip/evaluator-vip';
+import { VipRegistryComponent } from './features/evaluador-circuito/vip-registry/vip-registry';
 import { EvaluationSheets } from './features/evaluador-circuito/evaluation-sheets/evaluation-sheets';
 import { FinalReview } from './features/admin/final-review/final-review';
 import { Login } from './features/auth/login/login';
@@ -93,6 +94,13 @@ export const routes: Routes = [
         path: 'fichas-evaluacion',
         component: EvaluatorVip,
         title: 'Fichas de evaluacion',
+        canActivate: [authGuard],
+        data: { profile: 'evaluador' }
+      },
+      {
+        path: 'registro-vip',
+        component: VipRegistryComponent,
+        title: 'Registro de VIPs',
         canActivate: [authGuard],
         data: { profile: 'evaluador' }
       },

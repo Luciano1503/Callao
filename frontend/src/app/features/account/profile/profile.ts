@@ -120,6 +120,10 @@ export class Profile {
       return 'No se pudo actualizar la contrasena.';
     }
 
+    if (error.error?.data && typeof error.error.data === 'object' && Object.keys(error.error.data).length > 0) {
+      return Object.values(error.error.data)[0] as string;
+    }
+
     return error.error?.message ?? 'No se pudo actualizar la contrasena.';
   }
 }

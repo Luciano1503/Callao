@@ -9,6 +9,7 @@ public record VeedorGroupSummaryResponse(
 	String colorHex,
 	String estado,
 	Integer totalEvaluados,
-	LocalDateTime registradoEn
+	LocalDateTime registradoEn,
+	Boolean veedorFinalizado
 ) {
 }

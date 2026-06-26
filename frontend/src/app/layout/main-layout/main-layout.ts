@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import {
   LucideBadgeCheck,
@@ -104,7 +105,7 @@ export class MainLayout {
   });
 
   constructor() {
-    this.router.events.subscribe((event) => {
+    this.router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
       if (event instanceof NavigationEnd) {
         this.syncProfile();
       }
@@ -145,7 +146,7 @@ export class MainLayout {
       return 'supervisor';
     }
 
-    if (url.startsWith('/fichas-evaluacion')) {
+    if (url.startsWith('/fichas-evaluacion') || url.startsWith('/registro-vip')) {
       return 'evaluador';
     }
 

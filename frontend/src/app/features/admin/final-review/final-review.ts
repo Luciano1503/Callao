@@ -58,6 +58,9 @@ export class FinalReview {
   
   protected readonly appliedFilters = signal({ group: '', date: this.getLocalToday(), color: '', status: '' });
 
+  protected readonly currentPage = signal(1);
+  protected readonly itemsPerPage = 10;
+
   protected readonly groupOptions = computed(() => {
     const numbers = new Set(this.groups().map((g) => g.numeroGrupo));
     return [...numbers].sort((a, b) => a - b);
@@ -72,7 +75,31 @@ export class FinalReview {
       const matchesColor = !color || String(item.colorId) === color;
       const matchesStatus = !status || item.estado === status;
       return matchesGroup && matchesDate && matchesColor && matchesStatus;
-    });
+    }).sort((a, b) => a.numeroGrupo - b.numeroGrupo);
+  });
+
+  protected readonly paginatedGroups = computed(() => {
+    const startIndex = (this.currentPage() - 1) * this.itemsPerPage;
+    return this.filteredGroups().slice(startIndex, startIndex + this.itemsPerPage);
+  });
+
+  protected readonly totalPages = computed(() => {
+    return Math.ceil(this.filteredGroups().length / this.itemsPerPage) || 1;
+  });
+
+  protected readonly pages = computed(() => {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const pagesList = [];
+    const maxVisiblePages = 10;
+    const currentGroup = Math.ceil(current / maxVisiblePages);
+    const startPage = (currentGroup - 1) * maxVisiblePages + 1;
+    const endPage = Math.min(startPage + maxVisiblePages - 1, total);
+
+    for (let i = startPage; i <= endPage; i++) {
+      pagesList.push(i);
+    }
+    return pagesList;
   });
 
   constructor() {
@@ -97,7 +124,7 @@ export class FinalReview {
 
   protected applyFilters(): void {
     this.errorMessage.set('');
-    
+
     const groupStr = this.filterGroup().trim();
     const dateStr = this.filterDate();
 
@@ -109,7 +136,7 @@ export class FinalReview {
       );
 
       if (datesForGroup.size > 1) {
-        this.errorMessage.set(`Hay más de un grupo llamado "Grupo ${groupStr}", filtre también por día.`);
+        this.errorMessage.set(`Hay más de un grupo llamado \"Grupo ${groupStr}\", filtre también por día.`);
         return;
       }
     }
@@ -120,6 +147,14 @@ export class FinalReview {
       color: this.filterColor(),
       status: this.filterStatus()
     });
+    this.currentPage.set(1);
+    this.activeDetail.set(null);
+  }
+
+  protected changePage(page: number): void {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
   }
 
   protected selectGroup(group: FinalReviewGroup): void {
@@ -208,7 +243,8 @@ export class FinalReview {
 
     return new Intl.DateTimeFormat('es-PE', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true
     }).format(new Date(value));
   }
 
