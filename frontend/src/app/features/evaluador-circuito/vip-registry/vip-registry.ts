@@ -2,6 +2,8 @@ import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { VipRegistryService, VipRegistry } from './vip-registry.service';
+import { ScannerService } from '../../../core/services/scanner.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-vip-registry',
@@ -13,6 +15,7 @@ import { VipRegistryService, VipRegistry } from './vip-registry.service';
 export class VipRegistryComponent implements OnInit {
   private fb = inject(FormBuilder);
   private vipService = inject(VipRegistryService);
+  private scannerService = inject(ScannerService);
   private cdr = inject(ChangeDetectorRef);
 
   vipForm: FormGroup;
@@ -31,6 +34,10 @@ export class VipRegistryComponent implements OnInit {
     this.vipForm = this.fb.group({
       dni: ['', [Validators.required, Validators.pattern('^[0-9]{8}$')]],
       nombres: ['', [Validators.required, Validators.pattern('^[a-zA-ZñÑáéíóúÁÉÍÓÚ\\s]+$')]]
+    });
+
+    this.scannerService.scan$.pipe(takeUntilDestroyed()).subscribe((dni) => {
+      this.vipForm.patchValue({ dni });
     });
   }
 
