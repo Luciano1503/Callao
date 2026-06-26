@@ -76,10 +76,7 @@ export class EvaluatedRelation {
   });
 
   protected readonly canCreateNewGroup = computed(() => {
-    const groups = this.groups();
-    // Cache bust: 2026-06-25
-    console.log('Evaluated groups state:', groups.map(g => g.estado));
-    return groups.length === 0 || !groups.some(g => g.estado === 'BORRADOR');
+    return true;
   });
 
   protected readonly canFinalizeGroup = computed(() => {

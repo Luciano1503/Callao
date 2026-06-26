@@ -58,11 +58,6 @@ public class SupervisorEvaluadosService {
 		Long supervisorId = request.supervisorId();
 		validateSupervisor(supervisorId);
 
-		GroupRow latest = repository.findLatestGroupBySupervisor(supervisorId).orElse(null);
-		if (latest != null && DRAFT_STATUS.equals(latest.estado())) {
-			throw new BusinessException("Finalice el grupo actual antes de crear un nuevo grupo.");
-		}
-
 		int nextGroupNumber = repository.getMaxGroupNumber() + 1;
 		Long colorId = resolveColorId(nextGroupNumber);
 		ensureActiveColor(colorId);
