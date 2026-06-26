@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal, OnDestroy } from '@angular/core';
+import { Component, computed, inject, signal, OnDestroy, HostListener, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { LucideCalendar, LucideClock, LucideSave, LucidePrinter } from '@lucide/angular';
 import { Subscription } from 'rxjs';
@@ -50,8 +50,22 @@ export class VeedorSheet implements OnDestroy {
   private readonly timeService = inject(TimeService);
   private readonly catalogService = inject(CatalogService);
   private readonly veedorSheetService = inject(VeedorSheetService);
-  private readonly exportService = inject(ExportService);
   private readonly websocketService = inject(WebsocketService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly exportService = inject(ExportService);
+  private readonly elementRef = inject(ElementRef);
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('details.table-multi-picker')) {
+      const allDetails = this.elementRef.nativeElement.querySelectorAll('details.table-multi-picker');
+      allDetails.forEach((detail: HTMLDetailsElement) => {
+        detail.removeAttribute('open');
+      });
+    }
+  }
+
   private wsSubscription: Subscription | null = null;
   private wsConnectionSubscription: Subscription | null = null;
 
