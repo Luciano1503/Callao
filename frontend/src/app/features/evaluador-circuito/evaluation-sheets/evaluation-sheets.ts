@@ -86,7 +86,9 @@ export class EvaluationSheets {
   });
 
   protected readonly groupOptions = computed(() => {
-    const numbers = new Set(this.sheets().map((sheet) => sheet.numeroGrupo));
+    const dateStr = this.filterDate();
+    const filteredByDate = this.sheets().filter(s => !dateStr || this.toLocalDateString(s.registradoEn) === dateStr);
+    const numbers = new Set(filteredByDate.map((sheet) => sheet.numeroGrupo));
     return [...numbers].sort((first, second) => first - second);
   });
 

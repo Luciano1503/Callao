@@ -62,7 +62,9 @@ export class FinalReview {
   protected readonly itemsPerPage = 10;
 
   protected readonly groupOptions = computed(() => {
-    const numbers = new Set(this.groups().map((g) => g.numeroGrupo));
+    const dateStr = this.filterDate();
+    const filteredByDate = this.groups().filter(g => !dateStr || this.toInputDate(g.registradoEn) === dateStr);
+    const numbers = new Set(filteredByDate.map((g) => g.numeroGrupo));
     return [...numbers].sort((a, b) => a - b);
   });
 
